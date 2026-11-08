@@ -1,10 +1,11 @@
 
-name: Build MUI DLE APK
+name: Build MU IDLE APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   build:
@@ -14,20 +15,25 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Find and extract ZIP
+      - name: Extract MU IDLE project
         run: |
-          ZIP_FILE=$(find . -maxdepth 1 -type f -iname '*.zip' -print -quit)
-          if [ -z "$ZIP_FILE" ]; then
-            echo "Không tìm thấy file ZIP trong repository"
+          ZIP_FILE="./MU-IDLE-Android-WebView-iPhone-Build.zip"
+
+          if [ ! -f "$ZIP_FILE" ]; then
+            echo "Không tìm thấy file ZIP mới"
             exit 1
           fi
+
           mkdir extracted
           unzip "$ZIP_FILE" -d extracted
+
           PROJECT_FILE=$(find extracted -name settings.gradle.kts -print -quit)
+
           if [ -z "$PROJECT_FILE" ]; then
-            echo "Không tìm thấy settings.gradle.kts"
+            echo "Không tìm thấy project Android"
             exit 1
           fi
+
           echo "PROJECT_DIR=$(dirname "$PROJECT_FILE")" >> "$GITHUB_ENV"
 
       - name: Set up JDK 17
@@ -48,15 +54,17 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Build APK
+      - name: Build MU IDLE APK
         run: |
           cd "$PROJECT_DIR"
           gradle assembleDebug --no-daemon
-          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/MUIDLE-Manager.apk"
+
+          cp app/build/outputs/apk/debug/app-debug.apk \
+            "$GITHUB_WORKSPACE/MU-IDLE-Manager.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: MUIDLE-Manager-APK
-          path: MUIDLE-Manager.apk
+          name: MU-IDLE-Manager-APK
+          path: MU-IDLE-Manager.apk
           retention-days: 14
