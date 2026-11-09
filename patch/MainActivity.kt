@@ -5,6 +5,9 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import java.io.ByteArrayInputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -71,6 +74,56 @@ class MainActivity : Activity() {
         webView.addJavascriptInterface(AndroidBridge(), "MuIdleAndroid")
         webView.webChromeClient = WebChromeClient()
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): android.webkit.WebResourceResponse? {
+                val uri = request?.url ?: return null
+                if (!uri.path.orEmpty().endsWith("/g.js")) return null
+                return try {
+                    val connection = (URL(uri.toString()).openConnection() as HttpURLConnection).apply {
+                        requestMethod = "GET"
+                        connectTimeout = 10000
+                        readTimeout = 15000
+                        instanceFollowRedirects = true
+                        setRequestProperty("Accept-Encoding", "identity")
+                        request.requestHeaders["User-Agent"]?.let { setRequestProperty("User-Agent", it) }
+                        request.requestHeaders["Referer"]?.let { setRequestProperty("Referer", it) }
+                        CookieManager.getInstance().getCookie(uri.toString())?.let { setRequestProperty("Cookie", it) }
+                    }
+                    val status = connection.responseCode
+                    if (status !in 200..299) {
+                        connection.disconnect()
+                        return null
+                    }
+                    val original = connection.inputStream.use { it.readBytes() }
+                    val source = String(original, Charsets.UTF_8)
+                    val target = "const n=\\"walk\\"===Xe.motion?2.7:4.4,e="
+                    val replacement = "const n=(\\"walk\\"===Xe.motion?2.7:4.4)*(Xe.demo?Math.max(0.25,Math.min(5,Number(window.__muIdleOfflineSpeed)||1)):1),e="
+                    if (!source.contains(target)) {
+                        connection.disconnect()
+                        return null
+                    }
+                    val patched = source.replace(target, replacement).toByteArray(Charsets.UTF_8)
+                    val headers = mutableMapOf(
+                        "Access-Control-Allow-Origin" to "*",
+                        "Cache-Control" to "no-store"
+                    )
+                    connection.headerFields.forEach { (key, values) ->
+                        if (key != null && values != null && key.lowercase() !in setOf("content-length", "content-encoding", "transfer-encoding", "content-type")) {
+                            headers[key] = values.joinToString(",")
+                        }
+                    }
+                    connection.disconnect()
+                    android.webkit.WebResourceResponse(
+                        "application/javascript",
+                        "UTF-8",
+                        200,
+                        "OK",
+                        headers,
+                        ByteArrayInputStream(patched)
+                    )
+                } catch (_: Exception) {
+                    null
+                }
+            }
             override fun onPageFinished(view: WebView?, url: String?) {
                 errorView.visibility = View.GONE
                 webView.visibility = View.VISIBLE
@@ -97,11 +150,29 @@ class MainActivity : Activity() {
           document.head.appendChild(style);
           var box = document.createElement('div');
           box.id = 'mu-idle-tools';
-          box.innerHTML = '<button class="gear">⚙</button><div class="panel"><b>MU IDLE – Công cụ bổ sung</b><div class="line"><span>Ẩn quái</span><button class="switch" id="mu-hide-monsters">Tắt</button></div><div class="line"><span>Ẩn minimap</span><button class="switch" id="mu-minimap">Tắt</button></div><div class="line"><span>Giới hạn FPS bổ sung</span><select id="mu-fps" style="min-width:125px;background:#222;color:#fff;border:1px solid #777;padding:8px;border-radius:5px"><option value="0">Theo game (30/60)</option><option value="5">5 FPS</option><option value="10">10 FPS</option><option value="20">20 FPS</option></select></div><div class="note" id="mu-status">Các mục đồ họa 3D, hiệu ứng kỹ năng, chất lượng hình và ẩn người chơi đã có sẵn trong Cài đặt game.</div><button class="scan">Quét cấu trúc game và sao chép báo cáo</button></div>';
+          box.innerHTML = '<button class="gear">⚙</button><div class="panel"><b>MU IDLE – Công cụ bổ sung</b><div class="line"><span>Ẩn quái</span><button class="switch" id="mu-hide-monsters">Tắt</button></div><div class="line"><span>Ẩn minimap</span><button class="switch" id="mu-minimap">Tắt</button></div><div class="line" id="mu-offline-speed-row" style="display:none"><span>Tốc độ xem thử offline</span><select id="mu-offline-speed" style="min-width:125px;background:#222;color:#fff;border:1px solid #777;padding:8px;border-radius:5px"><option value="1">1x · Gốc</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="3">3x</option><option value="5">5x</option></select></div><div class="line"><span>Giới hạn FPS bổ sung</span><select id="mu-fps" style="min-width:125px;background:#222;color:#fff;border:1px solid #777;padding:8px;border-radius:5px"><option value="0">Theo game (30/60)</option><option value="5">5 FPS</option><option value="10">10 FPS</option><option value="20">20 FPS</option></select></div><div class="note" id="mu-status">Các mục đồ họa 3D, hiệu ứng kỹ năng, chất lượng hình và ẩn người chơi đã có sẵn trong Cài đặt game.</div><button class="scan">Quét cấu trúc game và sao chép báo cáo</button></div>';
           document.documentElement.appendChild(box);
           var panel = box.querySelector('.panel');
           box.querySelector('.gear').onclick = function() { panel.style.display = panel.style.display === 'block' ? 'none' : 'block'; };
           var status = box.querySelector('#mu-status');
+          var offlineSpeedRow=box.querySelector('#mu-offline-speed-row');
+          var offlineSpeedSelect=box.querySelector('#mu-offline-speed');
+          try {
+            var savedOfflineSpeed=localStorage.getItem('mu_idle_offline_speed')||'1';
+            offlineSpeedSelect.value=['1','1.5','2','3','5'].includes(savedOfflineSpeed)?savedOfflineSpeed:'1';
+            window.__muIdleOfflineSpeed=Number(offlineSpeedSelect.value);
+          } catch(e) { window.__muIdleOfflineSpeed=1; }
+          function refreshOfflineSpeedControl() {
+            var isOfflinePreview=!!(window.PC && window.PC.demo);
+            offlineSpeedRow.style.display=isOfflinePreview?'flex':'none';
+          }
+          refreshOfflineSpeedControl();
+          offlineSpeedSelect.onchange=function() {
+            var value=Number(offlineSpeedSelect.value)||1;
+            window.__muIdleOfflineSpeed=value;
+            try { localStorage.setItem('mu_idle_offline_speed',String(value)); } catch(e) {}
+            status.textContent='Tốc độ di chuyển bản xem thử offline: '+value+'x. Không ảnh hưởng chế độ online.';
+          };
           var monstersHidden=false, monsterButton=box.querySelector('#mu-hide-monsters');
           var originalPaint=null, drawImagePatched=false, originalDrawImage=null;
           function installMonsterFilter() {
