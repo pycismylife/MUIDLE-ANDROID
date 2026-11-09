@@ -95,8 +95,8 @@ class MainActivity : Activity() {
                     }
                     val original = connection.inputStream.use { it.readBytes() }
                     val source = String(original, Charsets.UTF_8)
-                    val target = "const n=\\"walk\\"===Xe.motion?2.7:4.4,e="
-                    val replacement = "const n=(\\"walk\\"===Xe.motion?2.7:4.4)*(Xe.demo?Math.max(0.25,Math.min(5,Number(window.__muIdleOfflineSpeed)||1)):1),e="
+                    val target = "const n=\"walk\"===Xe.motion?2.7:4.4,e="
+                    val replacement = "const n=(\"walk\"===Xe.motion?2.7:4.4)*(Xe.demo?Math.max(0.25,Math.min(5,Number(window.__muIdleOfflineSpeed)||1)):1),e="
                     if (!source.contains(target)) {
                         connection.disconnect()
                         return null
