@@ -159,6 +159,71 @@ class MainActivity : Activity() {
           var panel = box.querySelector('.panel');
           box.querySelector('.gear').onclick = function() { panel.style.display = panel.style.display === 'block' ? 'none' : 'block'; };
           var status = box.querySelector('#mu-status');
+          var automation=document.createElement('div');
+          automation.style.cssText='margin-top:9px;padding-top:8px;border-top:1px solid #665638';
+          automation.innerHTML='<b>MU IDLE – TỰ ĐỘNG HÓA</b><div class="line"><span>Auto Filter · bán theo bộ lọc game</span><button class="switch" id="mu-auto-filter">Tắt</button></div><div class="line"><span>Auto Map · đổi bãi khi đủ mạnh</span><button class="switch" id="mu-auto-map">Tắt</button></div><div class="line"><span>Auto Reset · reset khi đủ cấp</span><button class="switch" id="mu-auto-reset">Tắt</button></div><button id="mu-open-filter" style="width:100%;margin-top:5px">Cấu hình bộ lọc bán đồ</button><div class="note">Auto Filter và Auto Map dùng tùy chọn gốc của game. Auto Reset chỉ gửi lệnh khi nút Reset gốc đã mở khóa.</div>';
+          panel.insertBefore(automation,box.querySelector('.scan'));
+          var autoFilterBtn=automation.querySelector('#mu-auto-filter'),autoMapBtn=automation.querySelector('#mu-auto-map'),autoResetBtn=automation.querySelector('#mu-auto-reset');
+          function gameOption(key,value,done){
+            var set=document.getElementById('wSet');
+            if(!set||set.hidden){var open=document.getElementById('bSet');if(!open){status.textContent='Đăng nhập và vào nhân vật trước khi bật tự động hóa.';return;}open.click();}
+            setTimeout(function(){
+              var input=document.querySelector('#wSet input[data-o="'+key+'"]');
+              if(!input){status.textContent='Không tìm thấy cài đặt gốc '+key+' của game.';return;}
+              if(input.checked!==value){input.checked=value;input.dispatchEvent(new Event('change',{bubbles:true}));}
+              if(done)done();
+            },180);
+          }
+          function paintToggle(btn,on){btn.textContent=on?'Bật':'Tắt';btn.classList.toggle('on',!!on);}
+          var autoReset=false,resetPending=false;
+          try{autoReset=localStorage.getItem('mu_idle_auto_reset')==='1';}catch(e){}
+          function syncNativeToggles(){
+            var set=document.getElementById('wSet');
+            if(!set||set.hidden)return;
+            var f=set.querySelector('input[data-o="sellLow"]'),m=set.querySelector('input[data-o="zoneAuto"]');
+            if(f)paintToggle(autoFilterBtn,f.checked);
+            if(m)paintToggle(autoMapBtn,m.checked);
+          }
+          autoFilterBtn.onclick=function(){
+            var set=document.getElementById('wSet');
+            var f=set&&!set.hidden?set.querySelector('input[data-o="sellLow"]'):null;
+            gameOption('sellLow',!(f&&f.checked),function(){syncNativeToggles();status.textContent='Auto Filter đã '+(document.querySelector('#wSet input[data-o="sellLow"]')?.checked?'bật':'tắt')+'. Bộ lọc bán dùng quy tắc gốc trong game.';});
+          };
+          autoMapBtn.onclick=function(){
+            var set=document.getElementById('wSet');
+            var m=set&&!set.hidden?set.querySelector('input[data-o="zoneAuto"]'):null;
+            gameOption('zoneAuto',!(m&&m.checked),function(){syncNativeToggles();status.textContent='Auto Map đã cập nhật theo cài đặt gốc của game.';});
+          };
+          autoResetBtn.onclick=function(){
+            autoReset=!autoReset;paintToggle(autoResetBtn,autoReset);
+            try{localStorage.setItem('mu_idle_auto_reset',autoReset?'1':'0');}catch(e){}
+            status.textContent=autoReset?'Auto Reset đã bật: tự reset khi đạt cấp yêu cầu.':'Auto Reset đã tắt.';
+          };
+          paintToggle(autoResetBtn,autoReset);
+          autoResetBtn.classList.toggle('on',autoReset);
+          automation.querySelector('#mu-open-filter').onclick=function(){
+            var inv=document.getElementById('wInv');
+            if(!inv||inv.hidden){var b=document.getElementById('bInv');if(b)b.click();}
+            setTimeout(function(){var b=document.getElementById('bSellF');if(b)b.click();else status.textContent='Không mở được túi đồ. Hãy vào nhân vật trước.';},250);
+          };
+          setInterval(function(){
+            syncNativeToggles();
+            if(!autoReset||resetPending||!document.getElementById('bAutoT'))return;
+            var lvl=document.getElementById('lvl');if(!lvl)return;
+            var txt=lvl.textContent||'',lm=txt.match(/Lv\\s*(\\d+)/i),rm=txt.match(/RS\\s*(\\d+)/i);
+            if(!lm)return;
+            var level=Number(lm[1]),resets=rm?Number(rm[1]):0,required=Math.min(400,300+20*Math.floor((resets+1)/5));
+            if(level<required)return;
+            resetPending=true;
+            var charWin=document.getElementById('wChar');
+            if(!charWin||charWin.hidden){var cb=document.getElementById('bChar');if(cb)cb.click();}
+            setTimeout(function(){
+              var resetButton=document.getElementById('bReset');
+              if(resetButton&&!resetButton.disabled){resetButton.click();status.textContent='Auto Reset: đã gửi lệnh Reset ở cấp '+level+'.';}
+              else status.textContent='Auto Reset: đủ cấp nhưng nút Reset gốc chưa sẵn sàng; chưa gửi lệnh.';
+              setTimeout(function(){resetPending=false;},12000);
+            },350);
+          },2500);
           var offlineSpeedRow=box.querySelector('#mu-offline-speed-row');
           var offlineSpeedSelect=box.querySelector('#mu-offline-speed');
           try {
