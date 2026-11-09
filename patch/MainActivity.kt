@@ -97,7 +97,7 @@ class MainActivity : Activity() {
           document.head.appendChild(style);
           var box = document.createElement('div');
           box.id = 'mu-idle-tools';
-          box.innerHTML = '<button class="gear">⚙</button><div class="panel"><b>MU IDLE – Công cụ bổ sung</b><div class="line"><span>Ẩn quái</span><button class="switch" id="mu-hide-monsters">Tắt</button></div><div class="line"><span>Ẩn minimap</span><button class="switch" id="mu-minimap">Tắt</button></div><div class="note" id="mu-status">Các mục đồ họa 3D, hiệu ứng kỹ năng, chất lượng hình và ẩn người chơi đã có sẵn trong Cài đặt game.</div><button class="scan">Quét cấu trúc game và sao chép báo cáo</button></div>';
+          box.innerHTML = '<button class="gear">⚙</button><div class="panel"><b>MU IDLE – Công cụ bổ sung</b><div class="line"><span>Ẩn quái</span><button class="switch" id="mu-hide-monsters">Tắt</button></div><div class="line"><span>Ẩn minimap</span><button class="switch" id="mu-minimap">Tắt</button></div><div class="line"><span>Giới hạn FPS bổ sung</span><select id="mu-fps" style="min-width:125px;background:#222;color:#fff;border:1px solid #777;padding:8px;border-radius:5px"><option value="0">Theo game (30/60)</option><option value="5">5 FPS</option><option value="10">10 FPS</option><option value="20">20 FPS</option></select></div><div class="note" id="mu-status">Các mục đồ họa 3D, hiệu ứng kỹ năng, chất lượng hình và ẩn người chơi đã có sẵn trong Cài đặt game.</div><button class="scan">Quét cấu trúc game và sao chép báo cáo</button></div>';
           document.documentElement.appendChild(box);
           var panel = box.querySelector('.panel');
           box.querySelector('.gear').onclick = function() { panel.style.display = panel.style.display === 'block' ? 'none' : 'block'; };
@@ -141,6 +141,39 @@ class MainActivity : Activity() {
             monsterButton.textContent=monstersHidden?'Bật':'Tắt';
             monsterButton.classList.toggle('on',monstersHidden);
             status.textContent=monstersHidden?'Đã ẩn phần hình ảnh quái trên màn hình. Quái vẫn tồn tại để game tiếp tục tính chiến đấu.':'Đã hiện lại quái.';
+          };
+          var fpsSelect=box.querySelector('#mu-fps');
+          var fpsCap=0, rafQueue=[], rafCallbacks={}, rafId=0, rafScheduled=false, lastFrameAt=0;
+          var nativeRaf=window.requestAnimationFrame.bind(window);
+          var nativeCancel=window.cancelAnimationFrame.bind(window);
+          function loadFpsCap() {
+            try { fpsCap=Math.max(0,Math.min(20,Number(localStorage.getItem('mu_idle_fps_cap')||0))); } catch(e) { fpsCap=0; }
+            fpsSelect.value=String(fpsCap);
+          }
+          function runRafQueue(ts) {
+            rafScheduled=false;
+            if (fpsCap>0 && lastFrameAt && ts-lastFrameAt < 1000/fpsCap) {
+              rafScheduled=true; nativeRaf(runRafQueue); return;
+            }
+            lastFrameAt=ts;
+            var batch=rafQueue.splice(0);
+            batch.forEach(function(id) {
+              var cb=rafCallbacks[id]; delete rafCallbacks[id];
+              if (cb) { try { cb(ts); } catch(e) { setTimeout(function(){throw e;},0); } }
+            });
+            if (rafQueue.length && !rafScheduled) { rafScheduled=true; nativeRaf(runRafQueue); }
+          }
+          window.requestAnimationFrame=function(cb) {
+            var id=++rafId; rafCallbacks[id]=cb; rafQueue.push(id);
+            if (!rafScheduled) { rafScheduled=true; nativeRaf(runRafQueue); }
+            return id;
+          };
+          window.cancelAnimationFrame=function(id) { delete rafCallbacks[id]; };
+          loadFpsCap();
+          fpsSelect.onchange=function() {
+            fpsCap=Number(fpsSelect.value)||0; lastFrameAt=0;
+            try { localStorage.setItem('mu_idle_fps_cap',String(fpsCap)); } catch(e) {}
+            status.textContent=fpsCap ? 'Đã giới hạn tốc độ cập nhật hình ảnh ở '+fpsCap+' FPS. Hình ảnh sẽ kém mượt hơn.' : 'Đã trả giới hạn FPS về cài đặt gốc 30/60 của game.';
           };
           var miniHidden=false, mb=box.querySelector('#mu-minimap');
           mb.onclick=function() {
