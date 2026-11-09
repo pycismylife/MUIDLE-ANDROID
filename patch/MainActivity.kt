@@ -208,22 +208,26 @@ class MainActivity : Activity() {
           };
           setInterval(function(){
             syncNativeToggles();
-            if(!autoReset||resetPending||!document.getElementById('bAutoT'))return;
-            var lvl=document.getElementById('lvl');if(!lvl)return;
-            var txt=lvl.textContent||'',lm=txt.match(/Lv\\s*(\\d+)/i),rm=txt.match(/RS\\s*(\\d+)/i);
-            if(!lm)return;
-            var level=Number(lm[1]),resets=rm?Number(rm[1]):0,required=Math.min(400,300+20*Math.floor((resets+1)/5));
+            if(!autoReset||resetPending||!window.S)return;
+            // Read the live character data exposed by the game.
+            var state=window.S,level=Number(state.lv),resets=Number(state.reset)||0;
+            if(!Number.isFinite(level)||level<=0)return;
+            var required=Math.min(400,300+20*Math.floor((resets+1)/5));
             if(level<required)return;
             resetPending=true;
             var charWin=document.getElementById('wChar');
             if(!charWin||charWin.hidden){var cb=document.getElementById('bChar');if(cb)cb.click();}
             setTimeout(function(){
               var resetButton=document.getElementById('bReset');
-              if(resetButton&&!resetButton.disabled){resetButton.click();status.textContent='Auto Reset: đã gửi lệnh Reset ở cấp '+level+'.';}
-              else status.textContent='Auto Reset: đủ cấp nhưng nút Reset gốc chưa sẵn sàng; chưa gửi lệnh.';
-              setTimeout(function(){resetPending=false;},12000);
-            },350);
-          },2500);
+              if(resetButton&&!resetButton.disabled&&resetButton.getClientRects().length){
+                resetButton.click();
+                status.textContent='Auto Reset: đã gửi lệnh Reset · Lv '+level+' / yêu cầu '+required+'.';
+              }else{
+                status.textContent='Auto Reset: đủ cấp Lv '+level+' nhưng nút Reset chưa sẵn sàng.';
+              }
+              setTimeout(function(){resetPending=false;},5000);
+            },500);
+          },1500);
           var offlineSpeedRow=box.querySelector('#mu-offline-speed-row');
           var offlineSpeedSelect=box.querySelector('#mu-offline-speed');
           try {
