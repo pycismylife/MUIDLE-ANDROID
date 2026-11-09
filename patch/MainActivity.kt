@@ -2,9 +2,6 @@ package net.hoainiem2003.muidle
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import java.io.ByteArrayInputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -13,7 +10,6 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.webkit.CookieManager
-import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -22,23 +18,11 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.TextView
-import android.widget.Toast
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
     private lateinit var errorView: TextView
     private val homeUrl = "https://hoainiem2003.net/muidle"
-
-    inner class AndroidBridge {
-        @JavascriptInterface
-        fun copyReport(report: String) {
-            runOnUiThread {
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                clipboard.setPrimaryClip(ClipData.newPlainText("MU IDLE Diagnostic", report))
-                Toast.makeText(this@MainActivity, "Đã sao chép báo cáo. Hãy dán vào ChatGPT.", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,7 +55,6 @@ class MainActivity : Activity() {
             builtInZoomControls = false
             displayZoomControls = false
         }
-        webView.addJavascriptInterface(AndroidBridge(), "MuIdleAndroid")
         webView.webChromeClient = WebChromeClient()
         webView.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): android.webkit.WebResourceResponse? {
@@ -154,62 +137,29 @@ class MainActivity : Activity() {
           document.head.appendChild(style);
           var box = document.createElement('div');
           box.id = 'mu-idle-tools';
-          box.innerHTML = '<button class="gear">⚙</button><div class="panel"><b>MU IDLE – Công cụ bổ sung</b><div class="line"><span>Ẩn quái</span><button class="switch" id="mu-hide-monsters">Tắt</button></div><div class="line"><span>Ẩn minimap</span><button class="switch" id="mu-minimap">Tắt</button></div><div class="line" id="mu-offline-speed-row" style="display:none"><span>Tốc độ xem thử offline</span><select id="mu-offline-speed" style="min-width:125px;background:#222;color:#fff;border:1px solid #777;padding:8px;border-radius:5px"><option value="1">1x · Gốc</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="3">3x</option><option value="5">5x</option></select></div><div class="line"><span>Giới hạn FPS bổ sung</span><select id="mu-fps" style="min-width:125px;background:#222;color:#fff;border:1px solid #777;padding:8px;border-radius:5px"><option value="0">Theo game (30/60)</option><option value="5">5 FPS</option><option value="10">10 FPS</option><option value="20">20 FPS</option></select></div><div class="note" id="mu-status">Các mục đồ họa 3D, hiệu ứng kỹ năng, chất lượng hình và ẩn người chơi đã có sẵn trong Cài đặt game.</div><button class="scan">Quét cấu trúc game và sao chép báo cáo</button></div>';
+          box.innerHTML = '<button class="gear">⚙</button><div class="panel"><b>MU IDLE – Công cụ bổ sung</b><div class="line"><span>Ẩn quái</span><button class="switch" id="mu-hide-monsters">Tắt</button></div><div class="line"><span>Ẩn minimap</span><button class="switch" id="mu-minimap">Tắt</button></div><div class="line" id="mu-offline-speed-row" style="display:none"><span>Tốc độ xem thử offline</span><select id="mu-offline-speed" style="min-width:125px;background:#222;color:#fff;border:1px solid #777;padding:8px;border-radius:5px"><option value="1">1x · Gốc</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="3">3x</option><option value="5">5x</option></select></div><div class="line"><span>Giới hạn FPS bổ sung</span><select id="mu-fps" style="min-width:125px;background:#222;color:#fff;border:1px solid #777;padding:8px;border-radius:5px"><option value="0">Theo game (30/60)</option><option value="5">5 FPS</option><option value="10">10 FPS</option><option value="20">20 FPS</option></select></div><div class="note" id="mu-status">Các mục đồ họa 3D, hiệu ứng kỹ năng, chất lượng hình và ẩn người chơi đã có sẵn trong Cài đặt game.</div></div>';
           document.documentElement.appendChild(box);
           var panel = box.querySelector('.panel');
           box.querySelector('.gear').onclick = function() { panel.style.display = panel.style.display === 'block' ? 'none' : 'block'; };
           var status = box.querySelector('#mu-status');
           var automation=document.createElement('div');
           automation.style.cssText='margin-top:9px;padding-top:8px;border-top:1px solid #665638';
-          automation.innerHTML='<b>MU IDLE – TỰ ĐỘNG HÓA</b><div class="line"><span>Auto Filter · bán theo bộ lọc game</span><button class="switch" id="mu-auto-filter">Tắt</button></div><div class="line"><span>Auto Map · đổi bãi khi đủ mạnh</span><button class="switch" id="mu-auto-map">Tắt</button></div><div class="line"><span>Auto Reset · reset khi đủ cấp</span><button class="switch" id="mu-auto-reset">Tắt</button></div><button id="mu-open-filter" style="width:100%;margin-top:5px">Cấu hình bộ lọc bán đồ</button><div class="note">Auto Filter và Auto Map dùng tùy chọn gốc của game. Auto Reset chỉ gửi lệnh khi nút Reset gốc đã mở khóa.</div>';
-          panel.insertBefore(automation,box.querySelector('.scan'));
+          automation.innerHTML='<b>MU IDLE – TỰ ĐỘNG HÓA</b><div class="line"><span>Auto Filter PRO</span><button class="switch" id="mu-auto-filter">Chưa bật</button></div><div class="line"><span>Auto Map PRO</span><button class="switch" id="mu-auto-map">Chưa bật</button></div><div class="line"><span>Auto Reset · reset khi đủ cấp</span><button class="switch" id="mu-auto-reset">Tắt</button></div><div class="note">Auto Filter PRO và Auto Map PRO đang được triển khai độc lập; không sử dụng cài đặt bán đồ/đổi bản đồ gốc của game.</div>';
+          panel.insertBefore(automation,box.querySelector('.note'));
           var autoFilterBtn=automation.querySelector('#mu-auto-filter'),autoMapBtn=automation.querySelector('#mu-auto-map'),autoResetBtn=automation.querySelector('#mu-auto-reset');
-          function gameOption(key,value,done){
-            var set=document.getElementById('wSet');
-            if(!set||set.hidden){var open=document.getElementById('bSet');if(!open){status.textContent='Đăng nhập và vào nhân vật trước khi bật tự động hóa.';return;}open.click();}
-            setTimeout(function(){
-              var input=document.querySelector('#wSet input[data-o="'+key+'"]');
-              if(!input){status.textContent='Không tìm thấy cài đặt gốc '+key+' của game.';return;}
-              if(input.checked!==value){input.checked=value;input.dispatchEvent(new Event('change',{bubbles:true}));}
-              if(done)done();
-            },180);
-          }
           function paintToggle(btn,on){btn.textContent=on?'Bật':'Tắt';btn.classList.toggle('on',!!on);}
+          autoFilterBtn.disabled=true;autoMapBtn.disabled=true;
+          autoFilterBtn.style.opacity='.65';autoMapBtn.style.opacity='.65';
           var autoReset=false,resetPending=false;
           try{autoReset=localStorage.getItem('mu_idle_auto_reset')==='1';}catch(e){}
-          function syncNativeToggles(){
-            var set=document.getElementById('wSet');
-            if(!set||set.hidden)return;
-            var f=set.querySelector('input[data-o="sellLow"]'),m=set.querySelector('input[data-o="zoneAuto"]');
-            if(f)paintToggle(autoFilterBtn,f.checked);
-            if(m)paintToggle(autoMapBtn,m.checked);
-          }
-          autoFilterBtn.onclick=function(){
-            var set=document.getElementById('wSet');
-            var f=set&&!set.hidden?set.querySelector('input[data-o="sellLow"]'):null;
-            gameOption('sellLow',!(f&&f.checked),function(){syncNativeToggles();status.textContent='Auto Filter đã '+(document.querySelector('#wSet input[data-o="sellLow"]')?.checked?'bật':'tắt')+'. Bộ lọc bán dùng quy tắc gốc trong game.';});
-          };
-          autoMapBtn.onclick=function(){
-            var set=document.getElementById('wSet');
-            var m=set&&!set.hidden?set.querySelector('input[data-o="zoneAuto"]'):null;
-            gameOption('zoneAuto',!(m&&m.checked),function(){syncNativeToggles();status.textContent='Auto Map đã cập nhật theo cài đặt gốc của game.';});
-          };
           autoResetBtn.onclick=function(){
             autoReset=!autoReset;paintToggle(autoResetBtn,autoReset);
             try{localStorage.setItem('mu_idle_auto_reset',autoReset?'1':'0');}catch(e){}
             status.textContent=autoReset?'Auto Reset đã bật: tự reset khi đạt cấp yêu cầu.':'Auto Reset đã tắt.';
           };
           paintToggle(autoResetBtn,autoReset);
-          autoResetBtn.classList.toggle('on',autoReset);
-          automation.querySelector('#mu-open-filter').onclick=function(){
-            var inv=document.getElementById('wInv');
-            if(!inv||inv.hidden){var b=document.getElementById('bInv');if(b)b.click();}
-            setTimeout(function(){var b=document.getElementById('bSellF');if(b)b.click();else status.textContent='Không mở được túi đồ. Hãy vào nhân vật trước.';},250);
-          };
           setInterval(function(){
-            syncNativeToggles();
             if(!autoReset||resetPending||!window.S)return;
-            // Read the live character data exposed by the game.
             var state=window.S,level=Number(state.lv),resets=Number(state.reset)||0;
             if(!Number.isFinite(level)||level<=0)return;
             var required=Math.min(400,300+20*Math.floor((resets+1)/5));
@@ -326,14 +276,14 @@ class MainActivity : Activity() {
             mb.textContent=miniHidden?'Bật':'Tắt'; mb.classList.toggle('on',miniHidden);
           };
           var dbButton=document.createElement('button');
-          dbButton.textContent='Database đồ';
+          dbButton.textContent='Drop Table';
           dbButton.style.cssText='width:100%;margin-top:8px;background:#4a3b20';
-          panel.insertBefore(dbButton,box.querySelector('.scan'));
+          panel.insertBefore(dbButton,automation.nextSibling);
           var dbPanel=document.createElement('div');
           dbPanel.style.cssText='display:none;margin-top:8px;padding:9px;background:#171717;border:1px solid #806b43;border-radius:7px;max-height:55vh;overflow:auto';
-          dbPanel.innerHTML='<div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap"><button id="mu-db-items">Vật phẩm</button><button id="mu-db-maps">Bản đồ</button><button id="mu-db-monsters">Quái</button><button id="mu-db-drops">Drop Table</button></div><input id="mu-db-search" placeholder="Tìm kiếm..." style="box-sizing:border-box;width:100%;padding:9px;background:#222;color:#fff;border:1px solid #777;border-radius:5px"><div id="mu-db-summary" style="font-size:11px;color:#d9c58f;margin:7px 0"></div><div id="mu-db-results" style="font-size:12px;line-height:1.5"></div>';
-          panel.insertBefore(dbPanel,box.querySelector('.scan'));
-          var dbKind='items';
+          dbPanel.innerHTML='<input id="mu-db-search" placeholder="Tìm kiếm..." style="box-sizing:border-box;width:100%;padding:9px;background:#222;color:#fff;border:1px solid #777;border-radius:5px"><div id="mu-db-summary" style="font-size:11px;color:#d9c58f;margin:7px 0"></div><div id="mu-db-results" style="font-size:12px;line-height:1.5"></div>';
+          panel.insertBefore(dbPanel,dbButton.nextSibling);
+          var dbKind='drops';
           window.__muIdleDropSeen=function(entry){
             try{
               var logs=JSON.parse(localStorage.getItem('mu_idle_drop_log')||'[]');
@@ -345,40 +295,21 @@ class MainActivity : Activity() {
           };
           function dbText(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
           function dbRows(){
-            var data=window.D||{}, rows=[];
-            if(dbKind==='drops'){
-              var logs=[];try{logs=JSON.parse(localStorage.getItem('mu_idle_drop_log')||'[]');}catch(e){}
-              var grouped={};
-              logs.forEach(function(x){var key=x.map+'|'+x.g+'_'+x.n;if(!grouped[key])grouped[key]={title:x.item,sub:x.map+' · '+x.g+'_'+x.n,count:0,last:x.at};grouped[key].count++;grouped[key].last=Math.max(grouped[key].last,x.at);});
-              rows=Object.values(grouped).sort(function(a,b){return b.last-a.last;}).map(function(x){return {title:x.title,sub:x.sub+' · Ghi nhận '+x.count+' lần',raw:x};});
-            } else if(dbKind==='items'){
-              rows=Array.isArray(data.items)?data.items:Object.values(data.item||{});
-              rows=rows.map(function(x){return {title:x.name||x.n||'Vật phẩm',sub:(x.k||'')+' · '+(x.g!=null?'Nhóm '+x.g:'')+(x.lvr?' · Yêu cầu Lv '+x.lvr:''),raw:x};});
-            } else if(dbKind==='maps'){
-              rows=(Array.isArray(data.zones)?data.zones:[]).map(function(x){return {title:x.name||x.id||'Bản đồ',sub:'ID: '+(x.id||'—'),raw:x};});
-            } else {
-              rows=Object.entries(data.mon||{}).map(function(entry){var x=entry[1]||{};return {title:x.name||x.n||entry[0],sub:'ID: '+entry[0]+(x.lv?' · Lv '+x.lv:''),raw:x};});
-            }
-            return rows;
+            var logs=[];try{logs=JSON.parse(localStorage.getItem('mu_idle_drop_log')||'[]');}catch(e){}
+            var grouped={};
+            logs.forEach(function(x){var key=x.map+'|'+x.g+'_'+x.n;if(!grouped[key])grouped[key]={title:x.item,sub:x.map+' · '+x.g+'_'+x.n,count:0,last:x.at};grouped[key].count++;grouped[key].last=Math.max(grouped[key].last,x.at);});
+            return Object.values(grouped).sort(function(a,b){return b.last-a.last;}).map(function(x){return {title:x.title,sub:x.sub+' · Ghi nhận '+x.count+' lần',raw:x};});
           }
           function renderDb(){
             var rows=dbRows(), q=(dbPanel.querySelector('#mu-db-search').value||'').trim().toLowerCase();
             var filtered=rows.filter(function(x){return (x.title+' '+x.sub).toLowerCase().includes(q);});
-            dbPanel.querySelector('#mu-db-summary').textContent=filtered.length+' / '+rows.length+' mục · '+(dbKind==='items'?'Danh mục vật phẩm game':dbKind==='maps'?'Danh sách bản đồ game':dbKind==='monsters'?'Danh sách quái game':'Drop Table ghi nhận trên máy này');
-            dbPanel.querySelector('#mu-db-results').innerHTML=filtered.slice(0,250).map(function(x){return '<div style="padding:6px 2px;border-bottom:1px solid #38332a"><b>'+dbText(x.title)+'</b><div style="color:#b9aa8a">'+dbText(x.sub)+'</div></div>';}).join('')||(rows.length?'Không tìm thấy kết quả.':dbKind==='drops'?'Chưa ghi nhận món đồ rơi nào. Hãy chơi và nhặt/quan sát drop trong game.':'Chưa tải được dữ liệu game. Hãy vào nhân vật/bản đồ rồi mở lại.');
+            dbPanel.querySelector('#mu-db-summary').textContent=filtered.length+' / '+rows.length+' mục · Drop Table ghi nhận trên máy này';
+            dbPanel.querySelector('#mu-db-results').innerHTML=filtered.slice(0,250).map(function(x){return '<div style="padding:6px 2px;border-bottom:1px solid #38332a"><b>'+dbText(x.title)+'</b><div style="color:#b9aa8a">'+dbText(x.sub)+'</div></div>';}).join('')||(rows.length?'Không tìm thấy kết quả.':'Chưa ghi nhận món đồ rơi nào. Hãy chơi và quan sát drop trong game.');
             if(filtered.length>250)dbPanel.querySelector('#mu-db-summary').textContent+=' · Hiển thị 250 kết quả đầu';
-            if(dbKind==='items')dbPanel.querySelector('#mu-db-results').insertAdjacentHTML('beforeend','<div style="color:#e9c978;padding:8px 0">Danh mục vật phẩm game.</div>');
-            if(dbKind==='drops')dbPanel.querySelector('#mu-db-results').insertAdjacentHTML('beforeend','<div style="color:#e9c978;padding:8px 0">Dữ liệu được ghi nhận từ sự kiện drop thực tế: vật phẩm + bản đồ. Chưa thể xác định chính xác quái gây rơi vì gói dữ liệu không kèm ID quái.</div>');
+            dbPanel.querySelector('#mu-db-results').insertAdjacentHTML('beforeend','<div style="color:#e9c978;padding:8px 0">Dữ liệu ghi nhận từ sự kiện drop thực tế: vật phẩm + bản đồ. Chưa xác định được quái gây rơi vì dữ liệu sự kiện không kèm ID quái.</div>');
           }
           dbButton.onclick=function(){dbPanel.style.display=dbPanel.style.display==='block'?'none':'block';renderDb();};
           dbPanel.querySelector('#mu-db-search').oninput=renderDb;
-          [['mu-db-items','items'],['mu-db-maps','maps'],['mu-db-monsters','monsters'],['mu-db-drops','drops']].forEach(function(pair){dbPanel.querySelector('#'+pair[0]).onclick=function(){dbKind=pair[1];renderDb();};});
-          box.querySelector('.scan').onclick = function() {
-            var canvases = Array.from(document.querySelectorAll('canvas')).map(function(c,i) { var r=c.getBoundingClientRect(); return {index:i,id:c.id||'',className:String(c.className||''),pixelWidth:c.width,pixelHeight:c.height,cssWidth:Math.round(r.width),cssHeight:Math.round(r.height)}; });
-            var report = {url:location.href,title:document.title,userAgent:navigator.userAgent,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},canvasCount:canvases.length,canvases:canvases,imageCount:document.images.length,videoCount:document.querySelectorAll('video').length,iframes:Array.from(document.querySelectorAll('iframe')).map(function(x){return {src:x.src,id:x.id,className:x.className};}),scripts:Array.from(document.scripts).map(function(x){return x.src;}).filter(Boolean),visibleElements:Array.from(document.querySelectorAll('img,canvas,video,iframe,[id],[class]')).slice(0,250).map(function(e){var r=e.getBoundingClientRect();return {tag:e.tagName,id:e.id||'',className:typeof e.className==='string'?e.className:'',width:Math.round(r.width),height:Math.round(r.height)};}).filter(function(e){return e.width>0&&e.height>0;}).slice(0,150),memory:performance.memory?{usedJSHeapSize:performance.memory.usedJSHeapSize,totalJSHeapSize:performance.memory.totalJSHeapSize}:'not exposed'};
-            var output=JSON.stringify(report,null,2);
-            if(window.MuIdleAndroid) window.MuIdleAndroid.copyReport(output); else prompt('Sao chép báo cáo:',output);
-          };
         })();
         """.trimIndent()
         webView.evaluateJavascript(js, null)
