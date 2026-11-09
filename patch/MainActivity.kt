@@ -252,6 +252,39 @@ class MainActivity : Activity() {
             ['mmap','mmxy'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=miniHidden?'none':'';});
             mb.textContent=miniHidden?'Bật':'Tắt'; mb.classList.toggle('on',miniHidden);
           };
+          var dbButton=document.createElement('button');
+          dbButton.textContent='Database đồ';
+          dbButton.style.cssText='width:100%;margin-top:8px;background:#4a3b20';
+          panel.insertBefore(dbButton,box.querySelector('.scan'));
+          var dbPanel=document.createElement('div');
+          dbPanel.style.cssText='display:none;margin-top:8px;padding:9px;background:#171717;border:1px solid #806b43;border-radius:7px;max-height:55vh;overflow:auto';
+          dbPanel.innerHTML='<div style="display:flex;gap:5px;margin-bottom:8px"><button id="mu-db-items">Vật phẩm</button><button id="mu-db-maps">Bản đồ</button><button id="mu-db-monsters">Quái</button></div><input id="mu-db-search" placeholder="Tìm kiếm..." style="box-sizing:border-box;width:100%;padding:9px;background:#222;color:#fff;border:1px solid #777;border-radius:5px"><div id="mu-db-summary" style="font-size:11px;color:#d9c58f;margin:7px 0"></div><div id="mu-db-results" style="font-size:12px;line-height:1.5"></div>';
+          panel.insertBefore(dbPanel,box.querySelector('.scan'));
+          var dbKind='items';
+          function dbText(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+          function dbRows(){
+            var data=window.D||{}, rows=[];
+            if(dbKind==='items'){
+              rows=Array.isArray(data.items)?data.items:Object.values(data.item||{});
+              rows=rows.map(function(x){return {title:x.name||x.n||'Vật phẩm',sub:(x.k||'')+' · '+(x.g!=null?'Nhóm '+x.g:'')+(x.lvr?' · Yêu cầu Lv '+x.lvr:''),raw:x};});
+            } else if(dbKind==='maps'){
+              rows=(Array.isArray(data.zones)?data.zones:[]).map(function(x){return {title:x.name||x.id||'Bản đồ',sub:'ID: '+(x.id||'—'),raw:x};});
+            } else {
+              rows=Object.entries(data.mon||{}).map(function(entry){var x=entry[1]||{};return {title:x.name||x.n||entry[0],sub:'ID: '+entry[0]+(x.lv?' · Lv '+x.lv:''),raw:x};});
+            }
+            return rows;
+          }
+          function renderDb(){
+            var rows=dbRows(), q=(dbPanel.querySelector('#mu-db-search').value||'').trim().toLowerCase();
+            var filtered=rows.filter(function(x){return (x.title+' '+x.sub).toLowerCase().includes(q);});
+            dbPanel.querySelector('#mu-db-summary').textContent=filtered.length+' / '+rows.length+' mục · '+(dbKind==='items'?'Danh mục vật phẩm game':dbKind==='maps'?'Danh sách bản đồ game':'Danh sách quái game');
+            dbPanel.querySelector('#mu-db-results').innerHTML=filtered.slice(0,250).map(function(x){return '<div style="padding:6px 2px;border-bottom:1px solid #38332a"><b>'+dbText(x.title)+'</b><div style="color:#b9aa8a">'+dbText(x.sub)+'</div></div>';}).join('')||(rows.length?'Không tìm thấy kết quả.':'Chưa tải được dữ liệu game. Hãy vào nhân vật/bản đồ rồi mở lại.');
+            if(filtered.length>250)dbPanel.querySelector('#mu-db-summary').textContent+=' · Hiển thị 250 kết quả đầu';
+            if(dbKind==='items')dbPanel.querySelector('#mu-db-results').insertAdjacentHTML('beforeend','<div style="color:#e9c978;padding:8px 0">Lưu ý: dữ liệu danh mục không xác nhận vật phẩm rơi ở map nào. Drop Table hiện chưa được game cung cấp cho client.</div>');
+          }
+          dbButton.onclick=function(){dbPanel.style.display=dbPanel.style.display==='block'?'none':'block';renderDb();};
+          dbPanel.querySelector('#mu-db-search').oninput=renderDb;
+          [['mu-db-items','items'],['mu-db-maps','maps'],['mu-db-monsters','monsters']].forEach(function(pair){dbPanel.querySelector('#'+pair[0]).onclick=function(){dbKind=pair[1];renderDb();};});
           box.querySelector('.scan').onclick = function() {
             var canvases = Array.from(document.querySelectorAll('canvas')).map(function(c,i) { var r=c.getBoundingClientRect(); return {index:i,id:c.id||'',className:String(c.className||''),pixelWidth:c.width,pixelHeight:c.height,cssWidth:Math.round(r.width),cssHeight:Math.round(r.height)}; });
             var report = {url:location.href,title:document.title,userAgent:navigator.userAgent,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},canvasCount:canvases.length,canvases:canvases,imageCount:document.images.length,videoCount:document.querySelectorAll('video').length,iframes:Array.from(document.querySelectorAll('iframe')).map(function(x){return {src:x.src,id:x.id,className:x.className};}),scripts:Array.from(document.scripts).map(function(x){return x.src;}).filter(Boolean),visibleElements:Array.from(document.querySelectorAll('img,canvas,video,iframe,[id],[class]')).slice(0,250).map(function(e){var r=e.getBoundingClientRect();return {tag:e.tagName,id:e.id||'',className:typeof e.className==='string'?e.className:'',width:Math.round(r.width),height:Math.round(r.height)};}).filter(function(e){return e.width>0&&e.height>0;}).slice(0,150),memory:performance.memory?{usedJSHeapSize:performance.memory.usedJSHeapSize,totalJSHeapSize:performance.memory.totalJSHeapSize}:'not exposed'};
