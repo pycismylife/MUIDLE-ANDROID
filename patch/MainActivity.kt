@@ -97,31 +97,40 @@ class MainActivity : Activity() {
           document.head.appendChild(style);
           var box = document.createElement('div');
           box.id = 'mu-idle-tools';
-          box.innerHTML = '<button class="gear">⚙</button><div class="panel"><b>MU IDLE – Giảm tải</b><div class="line"><span>Giảm chất lượng hiệu ứng 3D</span><button class="switch" id="mu-lowfx">Tắt</button></div><div class="line"><span>Ẩn minimap (giao diện)</span><button class="switch" id="mu-minimap">Tắt</button></div><div class="note" id="mu-status">Giảm hiệu ứng dùng mức render thấp mà engine hỗ trợ. Ẩn minimap chỉ ẩn giao diện, chưa chắc giảm xử lý nền.</div><button class="scan">Quét cấu trúc game và sao chép báo cáo</button></div>';
+          box.innerHTML = '<button class="gear">⚙</button><div class="panel"><b>MU IDLE – Giảm tải</b><div class="line"><span>Đồ họa 3D nhân vật / quái</span><button class="switch" id="mu-native">Bật</button></div><div class="line"><span>Hiệu ứng kỹ năng</span><button class="switch" id="mu-effects">Bật</button></div><div class="line"><span>Mật độ hiệu ứng thấp</span><button class="switch" id="mu-quality">Tắt</button></div><div class="line"><span>Ẩn minimap</span><button class="switch" id="mu-minimap">Tắt</button></div><div class="note" id="mu-status">Điều khiển qua trạng thái đồ họa gốc của MU IDLE.</div><button class="scan">Quét cấu trúc game và sao chép báo cáo</button></div>';
           document.documentElement.appendChild(box);
           var panel = box.querySelector('.panel');
           box.querySelector('.gear').onclick = function() { panel.style.display = panel.style.display === 'block' ? 'none' : 'block'; };
           var status = box.querySelector('#mu-status');
-          var lowButton = box.querySelector('#mu-lowfx');
-          var lowFx = false, originalQuality, qualityCaptured = false;
-          function getPC() { try { return typeof PC !== 'undefined' ? PC : window.PC; } catch(e) { return window.PC || null; } }
-          lowButton.onclick = function() {
-            var pc = getPC();
-            if (!pc || typeof pc.quality === 'undefined') { status.textContent = 'Engine chưa công bố tuỳ chọn chất lượng. Không thay đổi gì.'; return; }
-            if (!qualityCaptured) { originalQuality = pc.quality; qualityCaptured = true; }
-            if (!lowFx) {
-              pc.quality = 'low'; lowFx = true; lowButton.textContent = 'Bật'; lowButton.classList.add('on');
-              status.textContent = 'Đã yêu cầu engine giảm độ phân giải render hiệu ứng kỹ năng xuống hệ số 0,65.';
-            } else {
-              pc.quality = originalQuality; lowFx = false; lowButton.textContent = 'Tắt'; lowButton.classList.remove('on');
-              status.textContent = 'Đã khôi phục chất lượng hiệu ứng ban đầu.';
-            }
+          function gameState() { try { return window.PCReview && window.PCReview.state ? window.PCReview.state : null; } catch(e) { return null; } }
+          function saveVisual(state,key) { try { var saved=JSON.parse(localStorage.getItem('muidle_visual')||'{}'); saved[key]=state[key]; localStorage.setItem('muidle_visual',JSON.stringify(saved)); } catch(e) {} }
+          function setupBoolean(id,key) {
+            var b=box.querySelector('#'+id), s=gameState();
+            if(s) { b.textContent=s[key]?'Bật':'Tắt'; b.classList.toggle('on',!!s[key]); }
+            b.onclick=function() {
+              var st=gameState();
+              if(!st || typeof st[key]==='undefined') { status.textContent='Game chưa sẵn sàng hoặc không có tuỳ chọn '+key+'.'; return; }
+              st[key]=!st[key]; saveVisual(st,key);
+              b.textContent=st[key]?'Bật':'Tắt'; b.classList.toggle('on',!!st[key]);
+              status.textContent='Đã cập nhật '+key+' trong cài đặt đồ họa game.';
+            };
+          }
+          setupBoolean('mu-native','native');
+          setupBoolean('mu-effects','effects');
+          var qb=box.querySelector('#mu-quality');
+          var st0=gameState();
+          if(st0) { var q0=st0.quality==='low'; qb.textContent=q0?'Bật':'Tắt'; qb.classList.toggle('on',q0); }
+          qb.onclick=function() {
+            var st=gameState(); if(!st) { status.textContent='Game chưa sẵn sàng.'; return; }
+            st.quality=st.quality==='low'?'high':'low'; saveVisual(st,'quality');
+            var on=st.quality==='low'; qb.textContent=on?'Bật':'Tắt'; qb.classList.toggle('on',on);
+            status.textContent=on?'Đã chọn mật độ hiệu ứng thấp.':'Đã khôi phục mật độ hiệu ứng cao.';
           };
-          var miniHidden = false, miniButton = box.querySelector('#mu-minimap');
-          miniButton.onclick = function() {
-            miniHidden = !miniHidden;
-            ['mmap','mmxy'].forEach(function(id) { var el=document.getElementById(id); if(el) el.style.display=miniHidden?'none':''; });
-            miniButton.textContent = miniHidden ? 'Bật' : 'Tắt'; miniButton.classList.toggle('on', miniHidden);
+          var miniHidden=false, mb=box.querySelector('#mu-minimap');
+          mb.onclick=function() {
+            miniHidden=!miniHidden;
+            ['mmap','mmxy'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=miniHidden?'none':'';});
+            mb.textContent=miniHidden?'Bật':'Tắt'; mb.classList.toggle('on',miniHidden);
           };
           box.querySelector('.scan').onclick = function() {
             var canvases = Array.from(document.querySelectorAll('canvas')).map(function(c,i) { var r=c.getBoundingClientRect(); return {index:i,id:c.id||'',className:String(c.className||''),pixelWidth:c.width,pixelHeight:c.height,cssWidth:Math.round(r.width),cssHeight:Math.round(r.height)}; });
