@@ -327,7 +327,7 @@ class MainActivity : Activity() {
               var buttons=row.querySelectorAll('button[data-a]');
               var amount=Math.min(10,left,available),button=amount>=10?row.querySelector('button[data-a="'+gameIndex+'"][data-n="10"]'):row.querySelector('button[data-a="'+gameIndex+'"][data-n="1"]');
               if(amount>=10&&button){button.click();}
-              else {button=row.querySelector('button[data-a="'+index+'"][data-n="1"]');if(!button){finish('Nút cộng điểm gốc của game chưa sẵn sàng.');return;}button.click();}
+              else {button=row.querySelector('button[data-a="'+gameIndex+'"][data-n="1"]');if(!button){finish('Nút cộng điểm gốc của game chưa sẵn sàng.');return;}button.click();}
               setTimeout(function(){
                 var now=statCurrentValue(gameIndex);
                 if(now!=null&&lastValue!=null&&now>lastValue){var delta=now-lastValue;added+=delta;left=Math.max(0,left-delta);lastValue=now;}
@@ -338,11 +338,11 @@ class MainActivity : Activity() {
             step();
           }
           statRows.querySelectorAll('[data-stat-add]').forEach(function(button){button.onclick=function(){statAdd(Number(button.dataset.statAdd));};});
-          var statAutoPending=false;
+          var statAutoPending=false,statAutoCursor=0;
           function statAutoTick(){
             if(statBusy||statAutoPending||!statAuto.some(Boolean)||!window.S)return;
             var available=statAvailablePoints();if(available<=0)return;
-            var idx=statAuto.findIndex(Boolean);if(idx<0)return;
+            var idx=-1;for(var k=0;k<5;k++){var candidate=(statAutoCursor+k)%5;if(statAuto[candidate]){idx=candidate;break;}}if(idx<0)return;statAutoCursor=(idx+1)%5;
             var charWin=document.getElementById('wChar'),needsOpen=!charWin||charWin.hidden;
             if(needsOpen){var cb=document.getElementById('bChar');if(cb)cb.click();}
             statAutoPending=true;statBusy=true;
