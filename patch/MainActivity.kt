@@ -78,12 +78,12 @@ class MainActivity : Activity() {
           window.__muAutoMoveMapInstalled = true;
 
           var css = document.createElement('style');
-          css.textContent = '#mu-map-tools{position:fixed;z-index:2147483647;top:12px;left:12px;font:14px Arial,sans-serif;color:#f1dfb2;max-width:calc(100vw - 24px)}#mu-map-tools button,#mu-map-tools select,#mu-map-tools input{font:inherit}#mu-map-tools .gear{width:44px;height:44px;border:1px solid #80683f;border-radius:12px;background:linear-gradient(145deg,#302719,#17130d);color:#f3dfb5;font-size:22px;box-shadow:0 3px 12px #0008}#mu-map-tools .panel{display:none;margin-top:7px;padding:14px;background:linear-gradient(155deg,rgba(39,30,18,.98),rgba(17,14,10,.98));border:1px solid #80683f;border-radius:13px;width:min(390px,calc(100vw - 30px));max-height:72vh;overflow:auto;box-sizing:border-box;box-shadow:0 8px 28px #0009}#mu-map-tools .field{display:flex;align-items:center;gap:7px;margin:10px 0}#mu-map-tools select,#mu-map-tools input{min-width:0;flex:1;padding:10px 8px;background:#302515;color:#f3dfb5;border:1px solid #80683f;border-radius:8px}#mu-map-tools button.action{width:100%;padding:11px;margin-top:8px;border:1px solid #80683f;border-radius:8px;background:#382c1b;color:#f3dfb5}#mu-map-tools button.on{background:#205b32;border-color:#4c9c61}#mu-map-tools .status{font-size:12px;line-height:1.5;color:#e8c979;margin-top:10px;white-space:normal}';
+          css.textContent = '#mu-map-tools{position:fixed;z-index:2147483647;top:12px;left:12px;font:13px Arial,sans-serif;color:#f1dfb2;max-width:calc(100vw - 24px)}#mu-map-tools button,#mu-map-tools select,#mu-map-tools input{font:inherit}#mu-map-tools .gear{width:42px;height:42px;border:1px solid #80683f;border-radius:0;background:#21190f;color:#f3dfb5;font-size:21px;box-shadow:0 3px 12px #0008}#mu-map-tools .panel{display:none;margin-top:6px;padding:10px;background:#17130f;border:1px solid #80683f;border-radius:0;width:min(370px,calc(100vw - 30px));max-height:72vh;overflow:auto;box-sizing:border-box;box-shadow:0 8px 28px #0009}#mu-map-tools .heading{display:flex;align-items:center;justify-content:space-between;font-weight:700;margin-bottom:9px}#mu-map-tools .rule{display:grid;grid-template-columns:auto 66px auto minmax(105px,1fr);align-items:center;gap:5px;margin:7px 0;white-space:nowrap}#mu-map-tools .rule input{width:100%;min-width:0;box-sizing:border-box;padding:7px 5px;background:#302515;color:#f3dfb5;border:1px solid #80683f;border-radius:0;text-align:center}#mu-map-tools select{width:100%;min-width:0;box-sizing:border-box;padding:7px 5px;background:#302515;color:#f3dfb5;border:1px solid #80683f;border-radius:0}#mu-map-tools button.action{width:100%;padding:8px;margin-top:7px;border:1px solid #80683f;border-radius:0;background:#382c1b;color:#f3dfb5}#mu-map-tools button.on{background:#205b32;border-color:#4c9c61}#mu-map-tools .status{font-size:11px;line-height:1.4;color:#e8c979;margin-top:8px;white-space:normal}';
           document.head.appendChild(css);
 
           var root = document.createElement('div');
           root.id = 'mu-map-tools';
-          root.innerHTML = '<button class="gear" type="button" aria-label="Auto Move Map">⚙</button><div class="panel"><b>MU IDLE · AUTO MOVE MAP</b><div class="field"><span style="white-space:nowrap">Lv 1 đến</span><input id="mu-map-limit" type="number" min="1" max="400" value="300"><span>Map Y</span></div><div class="field"><span style="white-space:nowrap">Lv trên ngưỡng</span><span style="white-space:nowrap">Map Z</span></div><div class="field"><select id="mu-map-y"><option value="">Chọn Map Y</option></select></div><div class="field"><select id="mu-map-z"><option value="">Chọn Map Z</option></select></div><button class="action" id="mu-map-refresh" type="button">Tải danh sách bản đồ</button><button class="action" id="mu-map-toggle" type="button">AUTO MOVE MAP · TẮT</button><div class="status" id="mu-map-status">Chọn Map Y, Map Z và ngưỡng cấp. Game tự đánh; công cụ chỉ chuyển bản đồ.</div></div>';
+          root.innerHTML = '<button class="gear" type="button" aria-label="Auto Move Map">⚙</button><div class="panel"><div class="heading">MU IDLE · AUTO MOVE MAP</div><div class="rule"><span>Lv 1 -</span><input id="mu-map-limit" type="number" min="1" max="400" value="300"><span>ở</span><select id="mu-map-y"><option value="">Map Y</option></select></div><div class="rule"><span id="mu-map-reset-label">Lv 300 - Reset ở</span><span></span><span></span><select id="mu-map-z"><option value="">Map Z</option></select></div><button class="action" id="mu-map-refresh" type="button">Tải danh sách bản đồ</button><button class="action" id="mu-map-toggle" type="button">AUTO MOVE MAP · ĐÃ TẮT</button><div class="status" id="mu-map-status">Nhập ngưỡng cấp, chọn Map Y và Map Z.</div></div>';
           document.documentElement.appendChild(root);
 
           var panel = root.querySelector('.panel');
@@ -91,6 +91,7 @@ class MainActivity : Activity() {
           var mapY = root.querySelector('#mu-map-y');
           var mapZ = root.querySelector('#mu-map-z');
           var status = root.querySelector('#mu-map-status');
+          var resetLabel = root.querySelector('#mu-map-reset-label');
           var toggle = root.querySelector('#mu-map-toggle');
           var cfg = { limit: 300, y: '', z: '', on: false };
           var options = [];
@@ -100,6 +101,7 @@ class MainActivity : Activity() {
           var tickTimer = null;
 
           function say(message) { status.textContent = message; }
+          function paintLimitLabel() { resetLabel.textContent = 'Lv ' + (Math.max(1, Math.min(400, Math.floor(Number(limitInput.value) || 300))) + ' - Reset ở'); }
           function safeLoad() {
             try {
               var saved = JSON.parse(localStorage.getItem('mu_auto_move_map_v1') || '{}');
@@ -287,13 +289,14 @@ class MainActivity : Activity() {
 
           safeLoad();
           limitInput.value = String(cfg.limit);
+          paintLimitLabel();
           paintToggle();
           root.querySelector('.gear').onclick = function () {
             panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
             if (panel.style.display === 'block' && !options.length) readMapOptions();
           };
           root.querySelector('#mu-map-refresh').onclick = readMapOptions;
-          limitInput.onchange = function () { save(); lastStage = ''; say('Đã lưu ngưỡng cấp ' + cfg.limit + '.'); };
+          limitInput.onchange = function () { save(); paintLimitLabel(); lastStage = ''; say('Đã lưu ngưỡng cấp ' + cfg.limit + '.'); };
           mapY.onchange = function () { cfg.y = mapY.value; save(); lastStage = ''; say('Đã lưu Map Y.'); };
           mapZ.onchange = function () { cfg.z = mapZ.value; save(); lastStage = ''; say('Đã lưu Map Z.'); };
           toggle.onclick = function () {
