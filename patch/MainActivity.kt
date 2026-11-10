@@ -159,7 +159,7 @@ class MainActivity : Activity() {
           var mapConfig={one:'',two:'',level:300,on:false},mapOptions=[],mapLastStage='',mapBusy=false;
           try{var savedMap=JSON.parse(localStorage.getItem('mu_idle_auto_map')||'{}');if(savedMap&&typeof savedMap==='object')mapConfig=Object.assign(mapConfig,savedMap);}catch(e){}
           mapLevel.value=String(Math.max(1,Math.min(400,Number(mapConfig.level)||300)));
-          function saveMapConfig(){mapConfig.one=mapOne.value;mapConfig.two=mapTwo.value;mapConfig.level=Math.max(1,Math.min(400,Number(mapLevel.value)||300));try{localStorage.setItem('mu_idle_auto_map',JSON.stringify(mapConfig));}catch(e){mapStatus.textContent='Không lưu được cấu hình trên thiết bị.';}}
+          function saveMapConfig(){if(mapOne.options.length)mapConfig.one=mapOne.value;if(mapTwo.options.length)mapConfig.two=mapTwo.value;mapConfig.level=Math.max(1,Math.min(400,Number(mapLevel.value)||300));try{localStorage.setItem('mu_idle_auto_map',JSON.stringify(mapConfig));}catch(e){mapStatus.textContent='Không lưu được cấu hình trên thiết bị.';}}
           function renderMapOptions(){
             [mapOne,mapTwo].forEach(function(sel){sel.innerHTML='<option value="">-- Chọn bản đồ --</option>'+mapOptions.map(function(m){return '<option value="'+filterEscape(m.id)+'">'+filterEscape(m.name)+(m.locked?' · Chưa mở khóa':'')+'</option>';}).join('');});
             mapOne.value=mapConfig.one||'';mapTwo.value=mapConfig.two||'';
