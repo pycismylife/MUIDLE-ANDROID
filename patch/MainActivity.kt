@@ -288,6 +288,52 @@ class MainActivity : Activity() {
           }
           filterPanel.querySelector('#mu-filter-scan').onclick=runFilterDryRun;
           renderFilterRules();
+          // Auto Stats PRO: use the game's own stat buttons and server action path.
+          var statsPanel=document.createElement('div');
+          statsPanel.id='mu-auto-stats-panel';
+          statsPanel.style.cssText='margin-top:8px;padding:9px;background:#21190f;border:1px solid #705632;border-radius:7px;font-size:12px';
+          statsPanel.innerHTML='<div style="font-weight:bold;color:#f0ddaf;margin-bottom:7px">AUTO STATS</div><div id="mu-stat-rows"></div><div id="mu-stat-status" style="color:#d9c58f;margin-top:7px;line-height:1.4">Nhập số điểm muốn cộng rồi nhấn +. Dùng nút cộng điểm gốc của game.</div>';
+          panel.insertBefore(statsPanel,automation.nextSibling);
+          var statRows=statsPanel.querySelector('#mu-stat-rows'),statStatus=statsPanel.querySelector('#mu-stat-status');
+          var statNames=['STR','AGI','VIT','ENE','CMD'],statConfig=[0,1,2,3,4],statBusy=false;
+          try{var savedStats=JSON.parse(localStorage.getItem('mu_idle_auto_stats')||'{}');if(savedStats&&Array.isArray(savedStats.values))statConfig=savedStats.values.map(function(v){return Math.max(0,Math.min(500000,Math.floor(Number(v)||0)));});}catch(e){}
+          while(statConfig.length<5)statConfig.push(0);
+          function saveStats(){try{localStorage.setItem('mu_idle_auto_stats',JSON.stringify({values:statConfig}));}catch(e){statStatus.textContent='Không lưu được số điểm trên thiết bị.';}}
+          statRows.innerHTML=statNames.map(function(name,i){return '<div style="display:flex;align-items:center;gap:7px;margin:6px 0"><div style="flex:1;min-width:0;padding:10px 8px;background:#302416;border:1px solid #705632;border-radius:4px;color:#f0ddaf;font-weight:bold">'+name+'</div><input data-stat-input="'+i+'" type="number" min="0" step="1" value="'+statConfig[i]+'" style="width:76px;box-sizing:border-box;padding:10px 5px;text-align:center;background:#21190f;border:1px solid #705632;border-radius:4px;color:#f0ddaf;font-weight:bold"><button data-stat-add="'+i+'" style="width:48px;height:40px;padding:0;background:#9d3928;border:1px solid #c77a50;border-radius:4px;color:#fff;font-size:26px;font-weight:bold">+</button></div>';}).join('');
+          statRows.querySelectorAll('[data-stat-input]').forEach(function(input){input.onchange=function(){var i=Number(input.dataset.statInput);statConfig[i]=Math.max(0,Math.min(500000,Math.floor(Number(input.value)||0)));input.value=String(statConfig[i]);saveStats();};});
+          function statAvailablePoints(){var el=document.querySelector('#wChar .cpts');var m=el&&el.textContent.match(/(\d+)/);return m?Number(m[1]):0;}
+          function statCurrentValue(index){var row=document.querySelectorAll('#wChar .cst')[index];if(!row)return null;var el=row.querySelector('.vl');return el?Number(el.textContent.trim()):null;}
+          function statAdd(index){
+            if(statBusy)return;
+            var input=statRows.querySelector('[data-stat-input="'+index+'"]');
+            var wanted=Math.max(0,Math.floor(Number(input&&input.value)||0));
+            if(!wanted){statStatus.textContent='Nhập số điểm lớn hơn 0 cho '+statNames[index]+'.';return;}
+            var charWin=document.getElementById('wChar');
+            if(!charWin||charWin.hidden){var charBtn=document.getElementById('bChar');if(charBtn)charBtn.click();}
+            statBusy=true;
+            var left=wanted,added=0,attempts=0,lastValue=statCurrentValue(index);
+            statStatus.textContent='Đang cộng '+statNames[index]+'…';
+            function step(){
+              var rows=document.querySelectorAll('#wChar .cst'),row=rows[index],available=statAvailablePoints(),value=statCurrentValue(index);
+              if(!row||value==null){finish('Không đọc được bảng chỉ số. Hãy mở Nhân vật rồi thử lại.');return;}
+              if(value!==lastValue&&lastValue!=null){var delta=value-lastValue;if(delta>0){added+=delta;left=Math.max(0,left-delta);}lastValue=value;}
+              if(left<=0){finish('Hoàn tất: đã cộng '+added+' điểm vào '+statNames[index]+'.');return;}
+              if(available<=0){finish('Đã cộng '+added+' điểm. Không còn điểm khả dụng.');return;}
+              if(attempts++>wanted+5){finish('Đã dừng để tránh gửi lặp. Đã cộng '+added+' điểm; hãy kiểm tra nhân vật.');return;}
+              var buttons=row.querySelectorAll('button[data-a]');
+              var amount=Math.min(10,left,available),button=amount>=10?row.querySelector('button[data-a="'+index+'"][data-n="10"]'):row.querySelector('button[data-a="'+index+'"][data-n="1"]');
+              if(amount>=10&&button){button.click();}
+              else {button=row.querySelector('button[data-a="'+index+'"][data-n="1"]');if(!button){finish('Nút cộng điểm gốc của game chưa sẵn sàng.');return;}button.click();}
+              setTimeout(function(){
+                var now=statCurrentValue(index);
+                if(now!=null&&lastValue!=null&&now>lastValue){var delta=now-lastValue;added+=delta;left=Math.max(0,left-delta);lastValue=now;}
+                step();
+              },220);
+            }
+            function finish(message){statBusy=false;statStatus.textContent=message;}
+            step();
+          }
+          statRows.querySelectorAll('[data-stat-add]').forEach(function(button){button.onclick=function(){statAdd(Number(button.dataset.statAdd));};});
           var autoReset=false,resetPending=false;
           try{autoReset=localStorage.getItem('mu_idle_auto_reset')==='1';}catch(e){}
           autoResetBtn.onclick=function(){
