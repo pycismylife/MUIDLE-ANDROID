@@ -47,3 +47,11 @@
 - Amounts are saved locally on the device. The allocator stops when the requested amount is reached or available points run out.
 - This is an assisted/manual allocation feature: the user chooses each amount and taps +. It does not automatically allocate newly earned points in the background.
 - Live server verification is still required to confirm the game's UI refresh timing and allocation acknowledgement on an active character.
+
+## Auto Stats / Auto Filter / inline panel update (2026-11-10)
+
+- Auto Stats rows now include a persistent per-stat "+ Hết" checkbox. When enabled, the allocator periodically uses the game's native +10 / +1 stat controls to spend available points, cycling across enabled attributes. Manual numeric allocation remains available via +.
+- Auto Map configuration now uses the compact two-line layout: "Lv 1 đến [x] farm map [y]" and "Lv [x] đến Reset farm map [z]".
+- Auto Map and Auto Filter configuration panels expand directly below their own menu rows.
+- Auto Filter Keep rules now support selecting exact Excellent line IDs 0–11 and choosing whether any selected line or all selected lines must be present. This is still read-only dry-run; no sell action is sent.
+- Needs live-game validation for stat allocation acknowledgement, exact Ex line labels/IDs against current server data, and map/panel behavior.
