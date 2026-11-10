@@ -78,7 +78,7 @@ class MainActivity : Activity() {
           window.__muAutoMoveMapInstalled = true;
 
           var css = document.createElement('style');
-          css.textContent = '#mu-map-tools{position:fixed;z-index:2147483647;top:12px;left:12px;font:14px Arial,sans-serif;color:#fff;max-width:calc(100vw - 24px)}#mu-map-tools button,#mu-map-tools select,#mu-map-tools input{font:inherit}#mu-map-tools .gear{width:42px;height:42px;border:1px solid #777;border-radius:7px;background:rgba(15,15,15,.96);color:#fff;font-size:22px}#mu-map-tools .panel{display:none;margin-top:6px;padding:11px;background:rgba(10,10,10,.97);border:1px solid #777;border-radius:8px;width:min(340px,calc(100vw - 48px));max-height:72vh;overflow:auto;box-sizing:border-box}#mu-map-tools .field{display:flex;align-items:center;gap:7px;margin:9px 0}#mu-map-tools select,#mu-map-tools input{min-width:0;flex:1;padding:9px 6px;background:#222;color:#fff;border:1px solid #777;border-radius:5px}#mu-map-tools button.action{width:100%;padding:10px;margin-top:7px;border:1px solid #777;border-radius:6px;background:#444;color:#fff}#mu-map-tools button.on{background:#286b37}#mu-map-tools .status{font-size:12px;line-height:1.5;color:#ffdf8a;margin-top:9px;white-space:normal}';
+          css.textContent = '#mu-map-tools{position:fixed;z-index:2147483647;top:12px;left:12px;font:14px Arial,sans-serif;color:#f1dfb2;max-width:calc(100vw - 24px)}#mu-map-tools button,#mu-map-tools select,#mu-map-tools input{font:inherit}#mu-map-tools .gear{width:44px;height:44px;border:1px solid #80683f;border-radius:12px;background:linear-gradient(145deg,#302719,#17130d);color:#f3dfb5;font-size:22px;box-shadow:0 3px 12px #0008}#mu-map-tools .panel{display:none;margin-top:7px;padding:14px;background:linear-gradient(155deg,rgba(39,30,18,.98),rgba(17,14,10,.98));border:1px solid #80683f;border-radius:13px;width:min(390px,calc(100vw - 30px));max-height:72vh;overflow:auto;box-sizing:border-box;box-shadow:0 8px 28px #0009}#mu-map-tools .field{display:flex;align-items:center;gap:7px;margin:10px 0}#mu-map-tools select,#mu-map-tools input{min-width:0;flex:1;padding:10px 8px;background:#302515;color:#f3dfb5;border:1px solid #80683f;border-radius:8px}#mu-map-tools button.action{width:100%;padding:11px;margin-top:8px;border:1px solid #80683f;border-radius:8px;background:#382c1b;color:#f3dfb5}#mu-map-tools button.on{background:#205b32;border-color:#4c9c61}#mu-map-tools .status{font-size:12px;line-height:1.5;color:#e8c979;margin-top:10px;white-space:normal}';
           document.head.appendChild(css);
 
           var root = document.createElement('div');
@@ -183,74 +183,106 @@ class MainActivity : Activity() {
             var row = document.querySelector('#wMap .zr.cur[data-z]');
             return row ? row.getAttribute('data-z') : null;
           }
+          var pendingTarget = '';
+          var lastAttemptAt = 0;
+          var failedAttempts = 0;
+          function closeMapOnlyIfWeOpenedIt(win, button, openedByUs) {
+            if (openedByUs && button && isVisible(win)) button.click();
+          }
           function switchMap(id, label) {
-            if (!id || busy) return;
+            if (!id || busy || pendingTarget === String(id)) return;
+            var nowTime = Date.now();
+            if (nowTime - lastAttemptAt < 12000) return;
+            if (failedAttempts >= 2) {
+              say('Chưa xác nhận được chuyển map sau 2 lần. Tạm dừng để không làm phiền thao tác của bạn; hãy kiểm tra map rồi bật lại.');
+              return;
+            }
             busy = true;
+            pendingTarget = String(id);
+            lastAttemptAt = nowTime;
             var win = document.getElementById('wMap');
             var button = document.getElementById('bMap');
             var openedByUs = !isVisible(win);
             if (openedByUs) {
-              if (!button) { busy = false; say('Không tìm thấy nút mở bản đồ.'); return; }
+              if (!button) {
+                busy = false; pendingTarget = '';
+                say('Không tìm thấy nút mở bản đồ.');
+                return;
+              }
               button.click();
             }
-            say('Đang chuyển sang ' + label + '…');
+            say('Đang chuyển một lần sang ' + label + '…');
             setTimeout(function () {
               var row = mapRows().find(function (item) { return item.getAttribute('data-z') === String(id); });
               if (!row) {
-                if (openedByUs && button) button.click();
-                busy = false;
-                say('Không tìm thấy bản đồ đã chọn trong danh sách. Hãy tải lại danh sách map.');
+                closeMapOnlyIfWeOpenedIt(win, button, openedByUs);
+                busy = false; pendingTarget = '';
+                failedAttempts++;
+                say('Không tìm thấy map đã chọn. Đã dừng, không tự mở danh sách liên tục.');
                 return;
               }
               if (row.classList.contains('lock')) {
-                if (openedByUs && button) button.click();
-                busy = false;
-                say(label + ' chưa mở khóa ở cấp hiện tại. Không gửi lệnh chuyển map.');
+                closeMapOnlyIfWeOpenedIt(win, button, openedByUs);
+                busy = false; pendingTarget = '';
+                failedAttempts = 2;
+                say(label + ' chưa mở khóa. Auto Move tạm dừng.');
                 return;
               }
               if (row.classList.contains('cur')) {
-                if (openedByUs && button) button.click();
-                busy = false;
-                say('Đang ở đúng ' + label + '.');
+                closeMapOnlyIfWeOpenedIt(win, button, openedByUs);
+                busy = false; pendingTarget = '';
+                failedAttempts = 0;
+                say('Đã ở đúng ' + label + '. Không cần chuyển map.');
                 return;
               }
               row.click();
               setTimeout(function () {
-                var now = mapRows().find(function (item) { return item.getAttribute('data-z') === String(id); });
-                if (openedByUs && button) button.click();
+                var current = mapRows().find(function (item) { return item.classList.contains('cur'); });
+                var reached = current && current.getAttribute('data-z') === String(id);
+                closeMapOnlyIfWeOpenedIt(win, button, openedByUs);
                 busy = false;
-                if (now && now.classList.contains('cur')) say('Đã chuyển thành công sang ' + label + '.');
-                else say('Đã gửi yêu cầu chuyển ' + label + ', nhưng game chưa xác nhận map hiện tại. Sẽ kiểm tra lại.');
-              }, 900);
-            }, 450);
+                if (reached) {
+                  pendingTarget = '';
+                  failedAttempts = 0;
+                  say('Đã đến ' + label + '. Auto Move sẽ không gửi lệnh nữa khi vẫn ở đúng map.');
+                } else {
+                  failedAttempts++;
+                  pendingTarget = '';
+                  say('Đã gửi 1 lệnh chuyển ' + label + '. Đang chờ game cập nhật; sẽ không click lặp liên tục.');
+                }
+              }, 1400);
+            }, 350);
           }
           function tick() {
             if (!cfg.on || busy) return;
             var level = getLevel();
             var reset = getReset();
-            if (level === null || reset === null) {
-              say('Đang chờ dữ liệu cấp độ và Reset từ nhân vật trong game…');
-              return;
-            }
+            if (level === null || reset === null) return;
             if (lastReset === null) lastReset = reset;
-            var targetStage;
             if (reset > lastReset) {
               lastReset = reset;
-              targetStage = 'y';
               lastStage = 'y';
-              if (!cfg.y) { say('Đã phát hiện Reset mới nhưng chưa chọn Map Y.'); return; }
-              switchMap(cfg.y, 'Map Y sau Reset');
-              return;
+              failedAttempts = 0;
+              pendingTarget = '';
+              if (!cfg.y) { say('Đã Reset nhưng chưa chọn Map Y.'); return; }
+            } else if (reset < lastReset) {
+              lastReset = reset;
             }
-            if (reset < lastReset) lastReset = reset;
-            targetStage = level <= cfg.limit ? 'y' : 'z';
+            var targetStage = level <= cfg.limit ? 'y' : 'z';
             var targetId = targetStage === 'y' ? cfg.y : cfg.z;
             var label = targetStage === 'y' ? 'Map Y' : 'Map Z';
             if (!targetId) { say('Chưa chọn ' + label + '.'); return; }
-            if (lastStage !== targetStage || currentMapId() !== targetId) {
+            var currentId = currentMapId();
+            if (currentId && String(currentId) === String(targetId)) {
+              pendingTarget = '';
+              failedAttempts = 0;
               lastStage = targetStage;
-              switchMap(targetId, label);
+              return;
             }
+            if (pendingTarget === String(targetId) || Date.now() - lastAttemptAt < 12000) return;
+            if (failedAttempts >= 2) return;
+            lastStage = targetStage;
+            switchMap(targetId, label);
           }
 
           safeLoad();
