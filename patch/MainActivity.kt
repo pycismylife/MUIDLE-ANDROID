@@ -295,7 +295,7 @@ class MainActivity : Activity() {
           statsPanel.innerHTML='<div style="font-weight:bold;color:#f0ddaf;margin-bottom:7px">AUTO STATS</div><div id="mu-stat-rows"></div><div id="mu-stat-status" style="color:#d9c58f;margin-top:7px;line-height:1.4">Nhập số điểm muốn cộng rồi nhấn +. Dùng nút cộng điểm gốc của game.</div>';
           panel.insertBefore(statsPanel,automation.nextSibling);
           var statRows=statsPanel.querySelector('#mu-stat-rows'),statStatus=statsPanel.querySelector('#mu-stat-status');
-          var statNames=['STR','AGI','VIT','ENE','CMD'],statConfig=[0,1,2,3,4],statBusy=false;
+          var statNames=['STR','AGI','ENE','VIT','CMD'],statIndex=[0,1,3,2,4],statConfig=[0,0,0,0,0],statBusy=false;
           try{var savedStats=JSON.parse(localStorage.getItem('mu_idle_auto_stats')||'{}');if(savedStats&&Array.isArray(savedStats.values))statConfig=savedStats.values.map(function(v){return Math.max(0,Math.min(500000,Math.floor(Number(v)||0)));});}catch(e){}
           while(statConfig.length<5)statConfig.push(0);
           function saveStats(){try{localStorage.setItem('mu_idle_auto_stats',JSON.stringify({values:statConfig}));}catch(e){statStatus.textContent='Không lưu được số điểm trên thiết bị.';}}
@@ -308,24 +308,24 @@ class MainActivity : Activity() {
             var input=statRows.querySelector('[data-stat-input="'+index+'"]');
             var wanted=Math.max(0,Math.floor(Number(input&&input.value)||0));
             if(!wanted){statStatus.textContent='Nhập số điểm lớn hơn 0 cho '+statNames[index]+'.';return;}
-            var charWin=document.getElementById('wChar');
-            if(!charWin||charWin.hidden){var charBtn=document.getElementById('bChar');if(charBtn)charBtn.click();}
+            var charWin=document.getElementById('wChar'),needsOpen=!charWin||charWin.hidden;
+            if(needsOpen){var charBtn=document.getElementById('bChar');if(charBtn)charBtn.click();}
             statBusy=true;
-            var left=wanted,added=0,attempts=0,lastValue=statCurrentValue(index);
+            var gameIndex=statIndex[index],left=wanted,added=0,attempts=0,lastValue=statCurrentValue(gameIndex);
             statStatus.textContent='Đang cộng '+statNames[index]+'…';
             function step(){
-              var rows=document.querySelectorAll('#wChar .cst'),row=rows[index],available=statAvailablePoints(),value=statCurrentValue(index);
+              var rows=document.querySelectorAll('#wChar .cst'),row=rows[gameIndex],available=statAvailablePoints(),value=statCurrentValue(gameIndex);
               if(!row||value==null){finish('Không đọc được bảng chỉ số. Hãy mở Nhân vật rồi thử lại.');return;}
               if(value!==lastValue&&lastValue!=null){var delta=value-lastValue;if(delta>0){added+=delta;left=Math.max(0,left-delta);}lastValue=value;}
               if(left<=0){finish('Hoàn tất: đã cộng '+added+' điểm vào '+statNames[index]+'.');return;}
               if(available<=0){finish('Đã cộng '+added+' điểm. Không còn điểm khả dụng.');return;}
               if(attempts++>wanted+5){finish('Đã dừng để tránh gửi lặp. Đã cộng '+added+' điểm; hãy kiểm tra nhân vật.');return;}
               var buttons=row.querySelectorAll('button[data-a]');
-              var amount=Math.min(10,left,available),button=amount>=10?row.querySelector('button[data-a="'+index+'"][data-n="10"]'):row.querySelector('button[data-a="'+index+'"][data-n="1"]');
+              var amount=Math.min(10,left,available),button=amount>=10?row.querySelector('button[data-a="'+gameIndex+'"][data-n="10"]'):row.querySelector('button[data-a="'+gameIndex+'"][data-n="1"]');
               if(amount>=10&&button){button.click();}
               else {button=row.querySelector('button[data-a="'+index+'"][data-n="1"]');if(!button){finish('Nút cộng điểm gốc của game chưa sẵn sàng.');return;}button.click();}
               setTimeout(function(){
-                var now=statCurrentValue(index);
+                var now=statCurrentValue(gameIndex);
                 if(now!=null&&lastValue!=null&&now>lastValue){var delta=now-lastValue;added+=delta;left=Math.max(0,left-delta);lastValue=now;}
                 step();
               },220);
