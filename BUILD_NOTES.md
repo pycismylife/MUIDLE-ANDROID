@@ -37,3 +37,13 @@
 ## Build status
 - Source change committed to `patch/MainActivity.kt`.
 - GitHub Actions builds the APK automatically on push to `main`.
+
+
+## Auto Stats PRO – Manual point allocation controls (2026-11-10)
+
+- Added a separate Auto Stats PRO panel in the Android WebView overlay, styled to match the dark brown/gold game UI.
+- Five rows are shown in the requested order: STR, AGI, ENE, VIT, CMD. Each row has a numeric point amount and a red + button; no checkbox/OK column.
+- The + button routes allocation through the game's existing character stat buttons (native +10 / +1 controls), rather than sending a custom server request or changing proprietary game code.
+- Amounts are saved locally on the device. The allocator stops when the requested amount is reached or available points run out.
+- This is an assisted/manual allocation feature: the user chooses each amount and taps +. It does not automatically allocate newly earned points in the background.
+- Live server verification is still required to confirm the game's UI refresh timing and allocation acknowledgement on an active character.
