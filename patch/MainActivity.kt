@@ -148,8 +148,90 @@ class MainActivity : Activity() {
           panel.insertBefore(automation,box.querySelector('.note'));
           var autoFilterBtn=automation.querySelector('#mu-auto-filter'),autoMapBtn=automation.querySelector('#mu-auto-map'),autoResetBtn=automation.querySelector('#mu-auto-reset');
           function paintToggle(btn,on){btn.textContent=on?'Bật':'Tắt';btn.classList.toggle('on',!!on);}
-          autoFilterBtn.disabled=true;autoMapBtn.disabled=true;
-          autoFilterBtn.style.opacity='.65';autoMapBtn.style.opacity='.65';
+          autoFilterBtn.disabled=false;autoMapBtn.disabled=true;
+          autoMapBtn.style.opacity='.65';
+          autoFilterBtn.textContent='Mở bộ lọc';
+          var filterPanel=document.createElement('div');
+          filterPanel.id='mu-filter-dryrun';
+          filterPanel.style.cssText='display:none;margin-top:8px;padding:9px;background:#171717;border:1px solid #806b43;border-radius:7px;max-height:58vh;overflow:auto;font-size:12px';
+          filterPanel.innerHTML='<div style="font-weight:bold;color:#f2d58e;margin-bottom:6px">AUTO FILTER PRO · CHẠY THỬ</div><div style="color:#ffcf70;line-height:1.45;margin-bottom:8px">Chỉ đọc túi đồ và mô phỏng luật giữ/bán. Không gửi lệnh bán, không thay đổi vật phẩm.</div><div id="mu-filter-rules"></div><button id="mu-filter-add" style="width:100%;margin-top:6px">+ Thêm luật giữ</button><button id="mu-filter-scan" style="width:100%;margin-top:6px;background:#315b3c">Quét túi đồ</button><div id="mu-filter-summary" style="margin-top:8px;color:#f0dba7"></div><div id="mu-filter-results" style="margin-top:6px;line-height:1.5"></div>';
+          panel.insertBefore(filterPanel,automation.nextSibling);
+          autoFilterBtn.onclick=function(){filterPanel.style.display=filterPanel.style.display==='block'?'none':'block';};
+          var filterGroups=[['w','Weapon'],['s','Shield'],['h','Headgear'],['a','Armor'],['p','Pants'],['g','Gloves'],['b','Boots']];
+          var filterRules=[];
+          try{var savedRules=JSON.parse(localStorage.getItem('mu_idle_filter_rules')||'[]');if(Array.isArray(savedRules))filterRules=savedRules.filter(function(r){return r&&filterGroups.some(function(g){return g[0]===r.group;});});}catch(e){}
+          function filterEscape(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+          function saveFilterRules(){try{localStorage.setItem('mu_idle_filter_rules',JSON.stringify(filterRules));}catch(e){status.textContent='Không lưu được luật lọc trên thiết bị.';}}
+          function renderFilterRules(){
+            var host=filterPanel.querySelector('#mu-filter-rules');
+            host.innerHTML=filterRules.map(function(r,i){
+              return '<div data-rule="'+i+'" style="border:1px solid #51452f;border-radius:6px;padding:7px;margin:7px 0"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><b>Luật giữ '+(i+1)+'</b><button data-remove="'+i+'" style="padding:4px 8px;background:#713333">Xóa</button></div><label style="display:block;margin-top:6px">Nhóm trang bị</label><select data-field="group" style="width:100%;padding:7px;background:#222;color:#fff;border:1px solid #777">'+filterGroups.map(function(g){return '<option value="'+g[0]+'" '+(r.group===g[0]?'selected':'')+'>'+g[1]+'</option>';}).join('')+'</select><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px"><label>Số dòng Ex tối thiểu<input data-field="minEx" type="number" min="1" max="6" value="'+(r.minEx||'')+'" placeholder="Bỏ qua" style="width:100%;box-sizing:border-box;padding:6px;background:#222;color:#fff"></label><label>Cấp + tối thiểu<input data-field="minLevel" type="number" min="0" max="15" value="'+(r.minLevel==null?'':r.minLevel)+'" placeholder="Bỏ qua" style="width:100%;box-sizing:border-box;padding:6px;background:#222;color:#fff"></label><label>Luck<select data-field="luck" style="width:100%;padding:6px;background:#222;color:#fff"><option value="any" '+((r.luck||'any')==='any'?'selected':'')+'>Không xét</option><option value="yes" '+(r.luck==='yes'?'selected':'')+'>Phải có</option><option value="no" '+(r.luck==='no'?'selected':'')+'>Không có</option></select></label><label>Option tối thiểu<input data-field="minOption" type="number" min="0" max="255" value="'+(r.minOption==null?'':r.minOption)+'" placeholder="Bỏ qua" style="width:100%;box-sizing:border-box;padding:6px;background:#222;color:#fff"></label></div><label style="display:flex;align-items:center;gap:6px;margin-top:7px"><input data-field="classOnly" type="checkbox" '+(r.classOnly?'checked':'')+'> Chỉ giữ đồ phù hợp class hiện tại</label><div style="color:#b9aa8a;margin-top:5px">Các điều kiện trong luật này kết hợp AND.</div></div>';
+            }).join('')||'<div style="color:#aaa">Chưa có luật giữ. Khi quét thử, đồ Ex nhận diện được sẽ được đánh dấu “Đủ điều kiện bán” (chỉ mô phỏng).</div>';
+            host.querySelectorAll('[data-rule]').forEach(function(row){
+              var idx=Number(row.getAttribute('data-rule'));
+              row.querySelectorAll('[data-field]').forEach(function(el){
+                el.onchange=function(){
+                  var key=el.getAttribute('data-field');
+                  if(key==='classOnly')filterRules[idx][key]=el.checked;
+                  else if(key==='group'||key==='luck')filterRules[idx][key]=el.value;
+                  else filterRules[idx][key]=el.value===''?null:Number(el.value);
+                  saveFilterRules();
+                };
+              });
+              var rm=row.querySelector('[data-remove]');if(rm)rm.onclick=function(){filterRules.splice(idx,1);saveFilterRules();renderFilterRules();};
+            });
+          }
+          filterPanel.querySelector('#mu-filter-add').onclick=function(){filterRules.push({group:'w',luck:'any'});saveFilterRules();renderFilterRules();};
+          function filterGroup(item){
+            var g=Number(item&&item.g);
+            if(g>=0&&g<=5)return 'w';
+            return ({6:'s',7:'h',8:'a',9:'p',10:'g',11:'b'})[g]||null;
+          }
+          function filterEquipped(item,state){
+            var eq=state&&state.eq||{};
+            return Object.keys(eq).some(function(k){
+              var x=eq[k];if(!x)return false;
+              if(x===item)return true;
+              if(x.u!=null&&item.u!=null&&String(x.u)===String(item.u))return true;
+              return x.g!=null&&x.n!=null&&item.g!=null&&item.n!=null&&Number(x.g)===Number(item.g)&&Number(x.n)===Number(item.n);
+            });
+          }
+          function filterMatches(rule,item,state){
+            if(rule.group!==filterGroup(item))return false;
+            if(rule.minEx!=null&&Number(item.ex&&item.ex.length||0)<Number(rule.minEx))return false;
+            if(rule.minLevel!=null&&Number(item.l||0)<Number(rule.minLevel))return false;
+            if(rule.luck==='yes'&&!item.lk)return false;
+            if(rule.luck==='no'&&!!item.lk)return false;
+            if(rule.minOption!=null&&Number(item.o||0)<Number(rule.minOption))return false;
+            if(rule.classOnly){
+              var cls=window.CLS&&window.CLS[state.cls],ci=cls&&Number(cls.ci);
+              var cat=window.D&&window.D.item&&window.D.item[Number(item.g)+'_'+Number(item.n)];
+              if(!cat||!Array.isArray(cat.cls)||!Number.isFinite(ci)||Number(cat.cls[ci])<=0)return false;
+            }
+            return true;
+          }
+          function runFilterDryRun(){
+            var state=window.S,host=filterPanel.querySelector('#mu-filter-results'),summary=filterPanel.querySelector('#mu-filter-summary');
+            if(!state||!Array.isArray(state.inv)){summary.textContent='Chưa đọc được túi đồ (window.S.inv).';host.textContent='Không có kết quả. Hãy đăng nhập và mở nhân vật trong game.';return;}
+            var counts={keep:0,sell:0,protected:0,unknown:0,nonEx:0},rows=[];
+            state.inv.forEach(function(item){
+              if(!item||typeof item!=='object')return;
+              var isEx=Array.isArray(item.ex)&&item.ex.length>0;
+              if(!isEx){counts.nonEx++;return;}
+              var group=filterGroup(item),name=(window.D&&window.D.item&&window.D.item[Number(item.g)+'_'+Number(item.n)]||{}).name||('Item '+item.g+'_'+item.n);
+              var equipped=filterEquipped(item,state);
+              if(equipped){counts.protected++;rows.push({name:name,group:group,label:'BẢO VỆ · Đang trang bị',color:'#8ec8ff'});return;}
+              if(!group){counts.unknown++;rows.push({name:name,group:null,label:'BẢO VỆ · Không nhận diện',color:'#ffcf70'});return;}
+              var kept=filterRules.some(function(rule){return filterMatches(rule,item,state);});
+              if(kept){counts.keep++;rows.push({name:name,group:group,label:'GIỮ · Khớp luật',color:'#8edb9c'});}
+              else{counts.sell++;rows.push({name:name,group:group,label:'ĐỦ ĐIỀU KIỆN BÁN · Mô phỏng',color:'#ff9b8f'});}
+            });
+            summary.textContent='Tổng Ex: '+(counts.keep+counts.sell+counts.protected+counts.unknown)+' · Giữ: '+counts.keep+' · Đủ điều kiện bán: '+counts.sell+' · Bảo vệ: '+(counts.protected+counts.unknown)+' · Đồ thường bỏ qua: '+counts.nonEx;
+            host.innerHTML=rows.map(function(x){return '<div style="padding:5px 2px;border-bottom:1px solid #38332a"><b>'+filterEscape(x.name)+'</b><div style="color:'+(x.color)+'">'+filterEscape(x.label)+(x.group?' · '+filterEscape((filterGroups.find(function(g){return g[0]===x.group;})||[])[1]||''):'')+'</div></div>';}).join('')||'<div style="color:#aaa">Túi đồ hiện không có trang bị Excellent.</div>';
+            status.textContent='Auto Filter PRO: đã quét thử '+state.inv.length+' ô/vật phẩm trong túi. Không có lệnh bán nào được gửi.';
+          }
+          filterPanel.querySelector('#mu-filter-scan').onclick=runFilterDryRun;
+          renderFilterRules();
           var autoReset=false,resetPending=false;
           try{autoReset=localStorage.getItem('mu_idle_auto_reset')==='1';}catch(e){}
           autoResetBtn.onclick=function(){
