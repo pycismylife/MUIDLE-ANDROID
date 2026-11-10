@@ -139,6 +139,44 @@ class MainActivity : Activity() {
           box.id = 'mu-idle-tools';
           box.innerHTML = '<button class="gear">⚙</button><div class="panel"><b>MU IDLE – Công cụ bổ sung</b><div class="line"><span>Ẩn quái</span><button class="switch" id="mu-hide-monsters">Tắt</button></div><div class="line"><span>Ẩn minimap</span><button class="switch" id="mu-minimap">Tắt</button></div><div class="line" id="mu-offline-speed-row" style="display:none"><span>Tốc độ xem thử offline</span><select id="mu-offline-speed" style="min-width:125px;background:#222;color:#fff;border:1px solid #777;padding:8px;border-radius:5px"><option value="1">1x · Gốc</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="3">3x</option><option value="5">5x</option></select></div><div class="line"><span>Giới hạn FPS bổ sung</span><select id="mu-fps" style="min-width:125px;background:#222;color:#fff;border:1px solid #777;padding:8px;border-radius:5px"><option value="0">Theo game (30/60)</option><option value="5">5 FPS</option><option value="10">10 FPS</option><option value="20">20 FPS</option></select></div><div class="note" id="mu-status">Các mục đồ họa 3D, hiệu ứng kỹ năng, chất lượng hình và ẩn người chơi đã có sẵn trong Cài đặt game.</div></div>';
           document.documentElement.appendChild(box);
+          // Keep the settings gear as a top-level fixed overlay. It is never a child
+          // of the minimap, so hiding the minimap cannot hide the gear.
+          var lastGearTop=12,lastGearLeft=12;
+          function findMapNameAnchor(){
+            var selectors=['#mapName','#map-name','#mapTitle','#map-title','#zoneName','#zone-name','#zname','[data-map-name]'];
+            for(var i=0;i<selectors.length;i++){
+              var el=document.querySelector(selectors[i]);
+              if(el&&!box.contains(el))return el;
+            }
+            var zone=window.S&&(window.S.zoneName||window.S.mapName||window.S.zone||window.S.map);
+            var name=typeof zone==='string'?zone:(zone&&typeof zone.name==='string'?zone.name:'');
+            if(name){
+              var nodes=Array.from(document.querySelectorAll('body *')).filter(function(el){
+                if(box.contains(el)||el.children.length>2)return false;
+                var t=(el.textContent||'').trim();
+                return t===name&&el.getBoundingClientRect().width>0;
+              });
+              if(nodes.length)return nodes.sort(function(a,b){return a.getBoundingClientRect().height-b.getBoundingClientRect().height;})[0];
+            }
+            var current=document.querySelector('#wMap .zr.cur b');
+            return current&&!box.contains(current)?current:null;
+          }
+          function updateSettingsPosition(){
+            var anchor=findMapNameAnchor();
+            if(anchor){
+              var r=anchor.getBoundingClientRect();
+              if(r.width>0&&r.height>0&&r.bottom>=0&&r.top<window.innerHeight){
+                lastGearTop=Math.max(8,Math.min(window.innerHeight-50,r.bottom+6));
+                lastGearLeft=Math.max(8,Math.min(window.innerWidth-50,r.left));
+              }
+            }
+            box.style.top=lastGearTop+'px';
+            box.style.left=lastGearLeft+'px';
+            box.style.right='auto';
+          }
+          updateSettingsPosition();
+          window.addEventListener('resize',updateSettingsPosition);
+          setInterval(updateSettingsPosition,700);
           var panel = box.querySelector('.panel');
           box.querySelector('.gear').onclick = function() { panel.style.display = panel.style.display === 'block' ? 'none' : 'block'; };
           var status = box.querySelector('#mu-status');
@@ -156,7 +194,7 @@ class MainActivity : Activity() {
           mapPanel.innerHTML='<div style="font-weight:bold;color:#f2d58e;margin-bottom:7px">AUTO MAP PRO</div><div style="display:flex;align-items:center;gap:5px;margin:7px 0;color:#f0ddaf">Lv 1 đến <input id="mu-map-level" type="number" min="1" max="400" value="300" style="width:58px;padding:8px 3px;background:#222;color:#fff;border:1px solid #777;border-radius:4px"> farm map <select id="mu-map-one" style="flex:1;min-width:0;padding:8px;background:#222;color:#fff;border:1px solid #777"><option value="">Chọn map Y</option></select></div><div style="display:flex;align-items:center;gap:5px;margin:7px 0;color:#f0ddaf">Lv <span id="mu-map-level-label">300</span> đến Reset farm map <select id="mu-map-two" style="flex:1;min-width:0;padding:8px;background:#222;color:#fff;border:1px solid #777"><option value="">Chọn map Z</option></select></div><button id="mu-map-refresh" style="width:100%;margin-top:5px">Làm mới danh sách map</button><button id="mu-map-toggle" class="switch" style="width:100%;margin-top:7px">Tắt Auto Map PRO</button><div id="mu-map-status" style="color:#ffdf8a;line-height:1.45;margin-top:7px">Độc lập với tùy chọn Tự đổi bãi của game.</div>';
           autoMapBtn.parentNode.insertBefore(mapPanel,autoMapBtn.parentNode.nextSibling);
           var mapOne=mapPanel.querySelector('#mu-map-one'),mapTwo=mapPanel.querySelector('#mu-map-two'),mapLevel=mapPanel.querySelector('#mu-map-level'),mapStatus=mapPanel.querySelector('#mu-map-status'),mapToggle=mapPanel.querySelector('#mu-map-toggle');
-          var mapConfig={one:'',two:'',level:300,on:false},mapOptions=[],mapLastStage='',mapBusy=false;
+          var mapConfig={one:'',two:'',level:300,on:false},mapOptions=[],mapLastStage='',mapBusy=false,mapLastReset=Number(window.S&&window.S.reset)||0;
           try{var savedMap=JSON.parse(localStorage.getItem('mu_idle_auto_map')||'{}');if(savedMap&&typeof savedMap==='object')mapConfig=Object.assign(mapConfig,savedMap);}catch(e){}
           mapLevel.value=String(Math.max(1,Math.min(400,Number(mapConfig.level)||300)));
           function saveMapConfig(){if(mapOne.options.length)mapConfig.one=mapOne.value;if(mapTwo.options.length)mapConfig.two=mapTwo.value;mapConfig.level=Math.max(1,Math.min(400,Number(mapLevel.value)||300));try{localStorage.setItem('mu_idle_auto_map',JSON.stringify(mapConfig));}catch(e){mapStatus.textContent='Không lưu được cấu hình trên thiết bị.';}}
@@ -193,10 +231,19 @@ class MainActivity : Activity() {
           }
           function mapTick(){
             if(!mapConfig.on||mapBusy)return;
+            var resets=Number(window.S&&window.S.reset)||0;
+            if(resets>mapLastReset){
+              mapLastReset=resets;
+              mapLastStage='one';
+              if(mapConfig.one){mapStatus.textContent='Phát hiện Reset mới. Đang quay về Map Y.';mapSwitchTo(mapConfig.one,'Y sau Reset');}
+              else mapStatus.textContent='Đã Reset nhưng chưa cấu hình Map Y.';
+              return;
+            }
+            if(resets<mapLastReset)mapLastReset=resets;
             var lv=mapLevelNow();if(lv==null)return;
             var stage=lv<=mapConfig.level?'one':'two',target=stage==='one'?mapConfig.one:mapConfig.two;
-            if(!target){mapStatus.textContent='Chưa chọn Map '+(stage==='one'?'1':'2')+'.';return;}
-            if(mapLastStage!==stage){mapLastStage=stage;mapSwitchTo(target,stage==='one'?1:2);}
+            if(!target){mapStatus.textContent='Chưa chọn Map '+(stage==='one'?'Y':'Z')+'.';return;}
+            if(mapLastStage!==stage){mapLastStage=stage;mapSwitchTo(target,stage==='one'?'Y':'Z');}
           }
           autoMapBtn.onclick=function(){mapPanel.style.display=mapPanel.style.display==='block'?'none':'block';if(!mapOptions.length)readMapOptions();};
           mapPanel.querySelector('#mu-map-refresh').onclick=readMapOptions;
