@@ -148,8 +148,64 @@ class MainActivity : Activity() {
           panel.insertBefore(automation,box.querySelector('.note'));
           var autoFilterBtn=automation.querySelector('#mu-auto-filter'),autoMapBtn=automation.querySelector('#mu-auto-map'),autoResetBtn=automation.querySelector('#mu-auto-reset');
           function paintToggle(btn,on){btn.textContent=on?'Bật':'Tắt';btn.classList.toggle('on',!!on);}
-          autoFilterBtn.disabled=false;autoMapBtn.disabled=true;
-          autoMapBtn.style.opacity='.65';
+          autoFilterBtn.disabled=false;autoMapBtn.disabled=false;
+          autoMapBtn.textContent='Cấu hình';
+          var mapPanel=document.createElement('div');
+          mapPanel.id='mu-auto-map-panel';
+          mapPanel.style.cssText='display:none;margin-top:8px;padding:9px;background:#171717;border:1px solid #806b43;border-radius:7px;font-size:12px';
+          mapPanel.innerHTML='<div style="font-weight:bold;color:#f2d58e;margin-bottom:7px">AUTO MAP PRO</div><label style="display:block;margin:6px 0">Map 1 · Lv 1 đến cấp chuyển giai đoạn<select id="mu-map-one" style="width:100%;padding:7px;background:#222;color:#fff;border:1px solid #777;margin-top:4px"><option value="">Đang tải danh sách map…</option></select></label><label style="display:block;margin:6px 0">Map 2 · Sau cấp chuyển giai đoạn đến Reset<select id="mu-map-two" style="width:100%;padding:7px;background:#222;color:#fff;border:1px solid #777;margin-top:4px"><option value="">Đang tải danh sách map…</option></select></label><label style="display:block;margin:8px 0">Cấp chuyển giai đoạn (mặc định 300)<input id="mu-map-level" type="number" min="1" max="400" value="300" style="width:100%;box-sizing:border-box;padding:7px;background:#222;color:#fff;border:1px solid #777;margin-top:4px"></label><button id="mu-map-refresh" style="width:100%;margin-top:5px">Làm mới danh sách map</button><button id="mu-map-toggle" class="switch" style="width:100%;margin-top:7px">Tắt Auto Map PRO</button><div id="mu-map-status" style="color:#ffdf8a;line-height:1.45;margin-top:7px">Độc lập với tùy chọn Tự đổi bãi của game.</div>';
+          panel.insertBefore(mapPanel,automation.nextSibling);
+          var mapOne=mapPanel.querySelector('#mu-map-one'),mapTwo=mapPanel.querySelector('#mu-map-two'),mapLevel=mapPanel.querySelector('#mu-map-level'),mapStatus=mapPanel.querySelector('#mu-map-status'),mapToggle=mapPanel.querySelector('#mu-map-toggle');
+          var mapConfig={one:'',two:'',level:300,on:false},mapOptions=[],mapLastStage='',mapBusy=false;
+          try{var savedMap=JSON.parse(localStorage.getItem('mu_idle_auto_map')||'{}');if(savedMap&&typeof savedMap==='object')mapConfig=Object.assign(mapConfig,savedMap);}catch(e){}
+          mapLevel.value=String(Math.max(1,Math.min(400,Number(mapConfig.level)||300)));
+          function saveMapConfig(){mapConfig.one=mapOne.value;mapConfig.two=mapTwo.value;mapConfig.level=Math.max(1,Math.min(400,Number(mapLevel.value)||300));try{localStorage.setItem('mu_idle_auto_map',JSON.stringify(mapConfig));}catch(e){mapStatus.textContent='Không lưu được cấu hình trên thiết bị.';}}
+          function renderMapOptions(){
+            [mapOne,mapTwo].forEach(function(sel){sel.innerHTML='<option value="">-- Chọn bản đồ --</option>'+mapOptions.map(function(m){return '<option value="'+filterEscape(m.id)+'">'+filterEscape(m.name)+(m.locked?' · Chưa mở khóa':'')+'</option>';}).join('');});
+            mapOne.value=mapConfig.one||'';mapTwo.value=mapConfig.two||'';
+          }
+          function readMapOptions(){
+            var mapWin=document.getElementById('wMap'),wasOpen=!!(mapWin&&!mapWin.hidden),mapBtn=document.getElementById('bMap');
+            if(!wasOpen&&mapBtn)mapBtn.click();
+            setTimeout(function(){
+              var rows=Array.from(document.querySelectorAll('#wMap .zr[data-z]'));
+              if(rows.length){
+                mapOptions=rows.map(function(row){return {id:row.getAttribute('data-z'),name:(row.querySelector('b')||row).textContent.trim(),locked:row.classList.contains('lock')};});
+                renderMapOptions();mapStatus.textContent='Đã đọc '+mapOptions.length+' bản đồ từ danh sách Di chuyển của game.';
+              }else mapStatus.textContent='Chưa đọc được danh sách map. Hãy vào game và thử làm mới.';
+              if(!wasOpen&&mapBtn)mapBtn.click();
+            },350);
+          }
+          function mapLevelNow(){var txt=(document.getElementById('lvl')||{}).textContent||'';var m=txt.match(/Lv\s*(\d+)/i);return m?Number(m[1]):null;}
+          function mapSwitchTo(id,stage){
+            if(!id||mapBusy)return;
+            mapBusy=true;
+            var mapBtn=document.getElementById('bMap'),mapWin=document.getElementById('wMap'),wasOpen=!!(mapWin&&!mapWin.hidden);
+            if(!wasOpen&&mapBtn)mapBtn.click();
+            setTimeout(function(){
+              var row=Array.from(document.querySelectorAll('#wMap .zr[data-z]')).find(function(x){return x.getAttribute('data-z')===id;});
+              if(!row){mapStatus.textContent='Không tìm thấy map đã chọn. Hãy làm mới danh sách.';if(!wasOpen&&mapBtn)mapBtn.click();mapBusy=false;return;}
+              if(row.classList.contains('lock')){mapStatus.textContent='Map đã chọn chưa mở khóa ở cấp hiện tại. Chưa chuyển map.';if(!wasOpen&&mapBtn)mapBtn.click();mapBusy=false;return;}
+              if(row.classList.contains('cur')){mapStatus.textContent='Đang ở đúng map của giai đoạn '+stage+'.';if(!wasOpen&&mapBtn)mapBtn.click();mapBusy=false;return;}
+              row.click();mapStatus.textContent='Đã yêu cầu game chuyển sang '+(row.querySelector('b')||row).textContent.trim()+'.';
+              mapBusy=false;
+            },350);
+          }
+          function mapTick(){
+            if(!mapConfig.on||mapBusy)return;
+            var lv=mapLevelNow();if(lv==null)return;
+            var stage=lv<=mapConfig.level?'one':'two',target=stage==='one'?mapConfig.one:mapConfig.two;
+            if(!target){mapStatus.textContent='Chưa chọn Map '+(stage==='one'?'1':'2')+'.';return;}
+            if(mapLastStage!==stage){mapLastStage=stage;mapSwitchTo(target,stage==='one'?1:2);}
+          }
+          autoMapBtn.onclick=function(){mapPanel.style.display=mapPanel.style.display==='block'?'none':'block';if(!mapOptions.length)readMapOptions();};
+          mapPanel.querySelector('#mu-map-refresh').onclick=readMapOptions;
+          mapOne.onchange=mapTwo.onchange=saveMapConfig;
+          mapLevel.onchange=function(){saveMapConfig();mapLastStage='';};
+          function paintMapToggle(){mapToggle.textContent=mapConfig.on?'Auto Map PRO · ĐANG BẬT':'Auto Map PRO · ĐÃ TẮT';mapToggle.classList.toggle('on',!!mapConfig.on);}
+          mapToggle.onclick=function(){mapConfig.on=!mapConfig.on;saveMapConfig();paintMapToggle();mapLastStage='';mapTick();};
+          paintMapToggle();saveMapConfig();
+          setInterval(mapTick,2000);
           autoFilterBtn.textContent='Mở bộ lọc';
           var filterPanel=document.createElement('div');
           filterPanel.id='mu-filter-dryrun';
