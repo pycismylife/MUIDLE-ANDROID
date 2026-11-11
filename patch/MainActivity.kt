@@ -521,7 +521,7 @@ class MainActivity : Activity() {
               if(typeof v==='function')globals.push({name:k,kind:'function',fn:fnInfo(v)});
               else if(v&&typeof v==='object')globals.push({name:k,kind:'object',keys:Object.keys(v).slice(0,60)});
             })}catch(e){}
-            var dispatcher=null;try{dispatcher=fnInfo(window.$n)}catch(e){dispatcher={error:String(e)}}
+            var dispatcher=null;try{dispatcher=fnInfo(window.\$n)}catch(e){dispatcher={error:String(e)}}
             var itemNodes=Array.from(document.querySelectorAll('.it[data-u]')).slice(0,30).map(function(el){return {u:el.getAttribute('data-u'),html:el.outerHTML.slice(0,1800),onclickAttribute:el.getAttribute('onclick'),onclick:fnInfo(el.onclick)}});
             var out={at:new Date().toISOString(),mode:'SELL_MECHANISM_INSPECTION_V2_NO_SELL',warning:'Không click nút bán, không gọi hàm bán, không thay đổi item.',buttons:[elementInfo('bSellAll'),elementInfo('bSellF')],dispatcherDollarN:dispatcher,globals:globals,itemNodes:itemNodes,inventoryCount:Array.isArray(window.S&&window.S.inv)?window.S.inv.length:null,hasJQuery:!!window.jQuery};
             reportBox.value=JSON.stringify(out,null,2);
