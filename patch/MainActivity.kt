@@ -420,69 +420,41 @@ class MainActivity : Activity() {
           var panel=root.querySelector('.panel'),status=root.querySelector('#mi-status'),list=root.querySelector('#mi-list'),reportBox=root.querySelector('#mi-report'),lastItems=[];
           var typeNames={w:'Vũ khí',s:'Khiên',h:'Mũ',a:'Giáp',p:'Quần',g:'Găng',b:'Giày',x:'Cánh'};
           var itemDb=null;
-          function findInventoryGrid(){
-            var grids=Array.from(document.querySelectorAll('.grid'));
-            var scored=grids.map(function(el){return {el:el,items:el.querySelectorAll('.it[data-u], [data-u] img, .it img').length,rect:el.getBoundingClientRect()}});
-            scored.sort(function(a,b){return b.items-a.items});
-            if(scored.length&&scored[0].items>0)return scored[0].el;
-            var bag=document.querySelector('#wBag,.bag,.inventory,[id*="Bag"],[class*="bag"],[class*="Bag"]');
-            return bag||null;
+          function itemTypeByGroup(g){
+            g=Number(g);
+            if(g>=0&&g<=5)return 'w';
+            return ({6:'s',7:'h',8:'a',9:'p',10:'g',11:'b',12:'x'})[g]||null;
           }
-          function findItemNodes(scope){
-            var selectors=['.it[data-u]','[data-u].it','.grid .it','[data-u]'];
-            var found=[];
-            selectors.forEach(function(sel){var list=Array.from((scope||document).querySelectorAll(sel));list.forEach(function(el){if(el.querySelector('img')&&!found.includes(el))found.push(el)})});
-            if(!found.length){
-              Array.from((scope||document).querySelectorAll('.grid img')).forEach(function(img){
-                var el=img.closest('.it')||img.parentElement;
-                if(el&&!found.includes(el))found.push(el);
-              });
-            }
-            return found;
+          function typeLabel(k){return typeNames[k]||'Chưa rõ'}
+          function readState(){
+            var state=window.S||null,dbRoot=window.D||null;
+            var items=state&&Array.isArray(state.inv)?state.inv:null;
+            var catalog=dbRoot&&dbRoot.item?dbRoot.item:null;
+            return {state:state,items:items,catalog:catalog,gridCount:document.querySelectorAll('.grid').length,domItems:document.querySelectorAll('.it[data-u]').length};
           }
-          function readState(){var grid=findInventoryGrid();var nodes=findItemNodes(grid||document);return {grid:grid,nodes:nodes,grids:document.querySelectorAll('.grid').length,allDataU:document.querySelectorAll('[data-u]').length,allItemClass:document.querySelectorAll('.it').length}}
-          async function readDb(){
-            if(itemDb)return itemDb;
-            try{
-              var response=await fetch(new URL('/muidle/data/items.json',location.origin).href,{credentials:'same-origin',cache:'no-cache'});
-              if(!response.ok)throw new Error('HTTP '+response.status);
-              var rows=await response.json();itemDb={};
-              rows.forEach(function(row){itemDb[row.g+'_'+row.n]=row});
-              return itemDb;
-            }catch(e){status.textContent='Không tải được danh mục item: '+String(e&&e.message||e)+'.';return null}
+          function excellentNames(ex){
+            var names=['Sát thương xuất sắc +10%','Sát thương +2%','Tốc độ đánh +7','Hồi máu khi hạ quái','Máu tối đa +4%','Giảm sát thương 4%','Zen rơi +40%','Né đòn +10%','Sát thương + cấp / 20','Hồi mana khi hạ quái','Mana tối đa +4%','Phản 5% sát thương'];
+            if(!Array.isArray(ex))return null;
+            return ex.map(function(code){var n=Number(code);return {code:code,name:names[n]||('Mã EX chưa giải mã: '+code)}});
           }
           function selectedTypes(){var out={};root.querySelectorAll('[data-type]').forEach(function(x){if(x.checked)out[x.dataset.type]=true});return out}
           function equippedIds(state){var ids={};Object.keys(state.eq||{}).forEach(function(k){var it=state.eq[k];if(it&&it.u!=null)ids[String(it.u)]=true});return ids}
-          async function scan(attempt){
-            attempt=attempt||0;
-            var state=readState(),db=await readDb();
-            if(!db){reportBox.value=JSON.stringify({error:'catalog_load_failed',url:'/muidle/data/items.json'},null,2);return}
-            var nodes=state.nodes||[];
-            if(!nodes.length&&attempt<6){
-              status.textContent='Đang chờ game dựng dữ liệu túi đồ ('+(attempt+1)+'/6)…';
-              setTimeout(function(){scan(attempt+1)},500);
+          async function scan(){
+            var state=readState(),items=state.items,db=state.catalog;
+            if(!state.state||!Array.isArray(items)||!db){
+              var diag={at:new Date().toISOString(),mode:'READ_ONLY_RUNTIME_DIAGNOSTIC',windowS:!!window.S,windowD:!!window.D,hasInventory:!!(state.state&&state.state.inv),inventoryIsArray:Array.isArray(items),inventoryLength:items?items.length:null,hasItemCatalog:!!db,domItemCount:state.domItems,gridCount:state.gridCount};
+              reportBox.value=JSON.stringify(diag,null,2);
+              status.textContent='Không truy cập được window.S.inv hoặc window.D.item. Đã ghi chẩn đoán; chưa thao tác item.';
               return;
             }
-            if(!nodes.length){
-              var diagnostic={at:new Date().toISOString(),mode:'READ_ONLY_DIAGNOSTIC',error:'inventory_nodes_not_found',url:location.href,bagOpen:!!document.querySelector('#wBag,.bag,.inventory,[id*="Bag"],[class*="bag"],[class*="Bag"]'),gridCount:state.grids,dataUCount:state.allDataU,itemClassCount:state.allItemClass,gridHtml:Array.from(document.querySelectorAll('.grid')).slice(0,4).map(function(el){return el.outerHTML.slice(0,5000)}),bagHtml:(state.grid||document.querySelector('#wBag,.bag,.inventory,[id*="Bag"],[class*="bag"],[class*="Bag"]')||{}).innerHTML?((state.grid||document.querySelector('#wBag,.bag,.inventory,[id*="Bag"],[class*="bag"],[class*="Bag"]')).innerHTML.slice(0,7000)):null};
-              reportBox.value=JSON.stringify(diagnostic,null,2);
-              status.textContent='Chưa tìm thấy node item sau 3 giây. Đã ghi chẩn đoán DOM vào báo cáo; không có thao tác bán.';
-              list.innerHTML='';
-              return;
-            }
-            lastItems=nodes.map(function(node){
-              var img=node.matches('img')?node:node.querySelector('img'),src=img?(img.getAttribute('src')||''):'';
-              var match=src.match(/(?:^|\/)(\d+)_(\d+[a-z]*)(?:\.[a-z0-9]+)(?:\?|$)/i);
-              var g=match?Number(match[1]):null,n=match?match[2]:null;
-              var base=match?(db[g+'_'+n]||db[g+'_'+String(parseInt(n,10))]||null):null,r=node.getBoundingClientRect(),style=node.style||{};
-              var pxW=parseFloat(style.width)||r.width,pxH=parseFloat(style.height)||r.height;
-              var pos=node.getAttribute('style')||'';
-              var left=(pos.match(/left:\s*([\d.]+)px/)||[])[1],top=(pos.match(/top:\s*([\d.]+)px/)||[])[1];
-              var itemId=node.getAttribute('data-u')||(node.closest('[data-u]')||{}).getAttribute&&node.closest('[data-u]').getAttribute('data-u');
-              return {u:itemId,g:g,n:n,name:base?base.name:'Không rõ item',type:base?base.k:null,typeName:typeNames[base&&base.k]||'Chưa rõ',w:base?base.w:Math.max(1,Math.round(pxW/36)),h:base?base.h:Math.max(1,Math.round(pxH/36)),x:Math.round((Number(left)||0)/36),y:Math.round((Number(top)||0)/36),plus:(function(){var m=((node.querySelector('em')||{}).textContent||'').match(/\+(\d+)/);return m?Number(m[1]):0})(),luck:null,option:null,excellent:null,equipped:false,known:!!base,icon:src,base:base||null,attributesStatus:'Cần đọc popup chi tiết'};
-            }).filter(function(it){return it.icon||it.u});
+            var equipped={};
+            Object.keys(state.state.eq||{}).forEach(function(slot){var it=state.state.eq[slot];if(it&&it.u!=null)equipped[String(it.u)]=true});
+            lastItems=items.map(function(it){
+              var key=String(it.g)+'_'+String(it.n),base=db[key]||null,kind=itemTypeByGroup(it.g),ex=excellentNames(it.ex);
+              return {u:it.u,g:it.g,n:it.n,name:base?base.name:'Không rõ item',type:kind,typeName:typeLabel(kind),w:Number(it.w)||(base&&base.w)||1,h:Number(it.h)||(base&&base.h)||1,x:Number(it.x)||0,y:Number(it.y)||0,plus:Number(it.l)||0,luck:it.lk===true||Number(it.lk)>0,option:Number(it.o)||0,excellent:ex,excellentCodes:Array.isArray(it.ex)?it.ex.slice():null,hasExcellent:Array.isArray(it.ex)&&it.ex.length>0,equipped:!!equipped[String(it.u)],known:!!base,icon:'ic166b57/'+key+(it.ex?'e':'')+'.webp',base:base?{k:base.k,dl:base.dl,dmin:base.dmin,dmax:base.dmax,def:base.def,spd:base.spd,str:base.str,agi:base.agi,ene:base.ene,vit:base.vit}:null,attributesStatus:'Đọc trực tiếp từ window.S.inv'};
+            });
             render(lastItems);
-            status.textContent='Đã đọc '+lastItems.length+' item từ DOM túi đồ và data/items.json. Thuộc tính riêng từng món cần lấy từ popup; chưa gửi lệnh bán.';
+            status.textContent='Đã đọc trực tiếp '+lastItems.length+' item từ window.S.inv; thuộc tính lấy từ instance. Chưa gửi lệnh bán.';
             makeReport(lastItems);
           }
           function render(items){
@@ -491,7 +463,7 @@ class MainActivity : Activity() {
               if(it.plus)attrs.push('+'+it.plus);
               if(it.luck)attrs.push('Luck');
               if(it.option)attrs.push('Option '+it.option);
-              if(it.excellent&&it.excellent.length)attrs.push('EX '+it.excellent.join(','));
+              if(it.hasExcellent)attrs.push('EX '+it.excellent.map(function(x){return x.name}).join(', '));
               attrs.push(it.w+'×'+it.h+' ô · ('+it.x+','+it.y+')');
               if(it.equipped)attrs.push('ĐANG TRANG BỊ');
               if(!it.known)attrs.push('CHƯA NHẬN DIỆN');
@@ -510,7 +482,7 @@ class MainActivity : Activity() {
               if(!it.known||it.equipped)return {item:it,decision:'KEEP',reason:reasons.join('; ')};
               if(!types[it.type])return {item:it,decision:'KEEP',reason:'Loại item chưa được chọn để bán'};
               if(it.excellent===null||it.luck===null||it.option===null)return {item:it,decision:'KEEP',reason:'Chưa đọc đủ thuộc tính Excellent/Luck/Option — giữ an toàn'};
-              if(keepEx&&it.excellent.length)reasons.push('Excellent');
+              if(keepEx&&it.hasExcellent)reasons.push('Excellent');
               if(keepLuck&&it.luck===true)reasons.push('Luck');
               if(keepOpt&&Number(it.option)>0)reasons.push('Có Option');
               if(minPlus>0&&it.plus>=minPlus)reasons.push('Đạt ngưỡng giữ +'+minPlus);
@@ -519,7 +491,7 @@ class MainActivity : Activity() {
             });
             var candidates=rows.filter(function(x){return x.decision==='CANDIDATE'});
             list.innerHTML=rows.map(function(x){var it=x.item;return '<div class="item '+(x.decision==='CANDIDATE'?'sell':'keep')+'"><b>'+escapeHtml(x.decision==='CANDIDATE'?'CÓ THỂ BÁN':'GIỮ')+'</b> · '+escapeHtml(it.name)+' · ID '+it.u+'<br>'+escapeHtml(x.reason||'Không khớp điều kiện bán')+' · '+it.w+'×'+it.h+' ô</div>'}).join('');
-            var out={at:new Date().toISOString(),mode:'DRY_RUN_ONLY_NO_SELL_COMMAND',total:rows.length,candidateCount:candidates.length,keepCount:rows.length-candidates.length,settings:{types:types,keepExcellent:keepEx,keepLuck:keepLuck,keepOption:keepOpt,minPlus:minPlus},results:rows.map(function(x){return {u:x.item.u,name:x.item.name,type:x.item.type,decision:x.decision,reason:x.reason,position:{x:x.item.x,y:x.item.y},size:{w:x.item.w,h:x.item.h},icon:x.item.icon,iconKey:(x.item.g!=null&&x.item.n!=null?String(x.item.g)+'_'+String(x.item.n):null),catalogType:x.item.base?x.item.base.k:null,plus:x.item.plus,luck:x.item.luck,option:x.item.option,excellent:x.item.excellent,attributesStatus:x.item.attributesStatus}})};
+            var out={at:new Date().toISOString(),mode:'DRY_RUN_ONLY_NO_SELL_COMMAND',total:rows.length,candidateCount:candidates.length,keepCount:rows.length-candidates.length,settings:{types:types,keepExcellent:keepEx,keepLuck:keepLuck,keepOption:keepOpt,minPlus:minPlus},results:rows.map(function(x){return {u:x.item.u,g:x.item.g,n:x.item.n,name:x.item.name,type:x.item.type,decision:x.decision,reason:x.reason,position:{x:x.item.x,y:x.item.y},size:{w:x.item.w,h:x.item.h},icon:x.item.icon,plus:x.item.plus,luck:x.item.luck,option:x.item.option,excellent:x.item.excellent,excellentCodes:x.item.excellentCodes,hasExcellent:x.item.hasExcellent,equipped:x.item.equipped,attributesStatus:x.item.attributesStatus}})};
             reportBox.value=JSON.stringify(out,null,2);
             status.textContent='Chạy thử hoàn tất: '+candidates.length+' ứng viên / '+rows.length+' item. Đây KHÔNG phải lệnh bán.';
           }
