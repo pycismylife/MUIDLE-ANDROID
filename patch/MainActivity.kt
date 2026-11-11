@@ -419,22 +419,36 @@ class MainActivity : Activity() {
           document.documentElement.appendChild(root);
           var panel=root.querySelector('.panel'),status=root.querySelector('#mi-status'),list=root.querySelector('#mi-list'),reportBox=root.querySelector('#mi-report'),lastItems=[];
           var typeNames={w:'Vũ khí',s:'Khiên',h:'Mũ',a:'Giáp',p:'Quần',g:'Găng',b:'Giày',x:'Cánh'};
-          function readState(){try{return typeof d!=='undefined'&&d?d:null}catch(e){return null}}
-          function readDb(){try{return typeof r!=='undefined'&&r&&r.item?r.item:null}catch(e){return null}}
+          var itemDb=null;
+          function readState(){return document.querySelector('#wBag .grid')||document.querySelector('#wBag .invz')||document.querySelector('.grid')}
+          async function readDb(){
+            if(itemDb)return itemDb;
+            try{
+              var response=await fetch(new URL('data/items.json',location.href).href,{credentials:'same-origin',cache:'force-cache'});
+              if(!response.ok)throw new Error('HTTP '+response.status);
+              var rows=await response.json();itemDb={};
+              rows.forEach(function(row){itemDb[row.g+'_'+row.n]=row});
+              return itemDb;
+            }catch(e){return null}
+          }
           function selectedTypes(){var out={};root.querySelectorAll('[data-type]').forEach(function(x){if(x.checked)out[x.dataset.type]=true});return out}
           function equippedIds(state){var ids={};Object.keys(state.eq||{}).forEach(function(k){var it=state.eq[k];if(it&&it.u!=null)ids[String(it.u)]=true});return ids}
-          function scan(){
-            var state=readState(),db=readDb();
-            if(!state||!Array.isArray(state.inv)||!db){status.textContent='Không đọc được state d.inv hoặc database r.item. Chưa có thao tác nào được thực hiện.';return}
-            var eq=equippedIds(state);
-            lastItems=state.inv.map(function(it){
-              var base=db[it.g+'_'+it.n]||null;
-              var cat=base?base.k:null;
-              var ex=Array.isArray(it.ex)?it.ex:[];
-              return {u:it.u,g:it.g,n:it.n,name:base?base.name:'Không rõ item',type:cat,typeName:typeNames[cat]||'Chưa rõ',w:it.w,h:it.h,x:it.x,y:it.y,plus:Number(it.l)||0,luck:!!it.lk,option:Number(it.o)||0,excellent:ex,equipped:!!eq[String(it.u)],known:!!base,base:base?{k:base.k,dl:base.dl,dmin:base.dmin,dmax:base.dmax,def:base.def,spd:base.spd,str:base.str,agi:base.agi,ene:base.ene,vit:base.vit}:null};
+          async function scan(){
+            var grid=readState(),db=await readDb();
+            if(!grid||!db){status.textContent='Chưa tìm thấy lưới túi đồ hoặc không tải được data/items.json. Chưa có thao tác nào được thực hiện.';return}
+            var nodes=Array.from(grid.querySelectorAll('.it[data-u]'));
+            if(!nodes.length){status.textContent='Đã tìm thấy vùng túi nhưng chưa thấy item. Hãy mở túi đồ rồi đọc lại.';return}
+            lastItems=nodes.map(function(node){
+              var img=node.querySelector('img'),src=img?(img.getAttribute('src')||''):'';
+              var match=src.match(/(?:^|\/)(\d+)_(\d+)(?:\.[a-z0-9]+)(?:\?|$)/i);
+              var g=match?Number(match[1]):null,n=match?Number(match[2]):null;
+              var base=match?db[g+'_'+n]:null,r=node.getBoundingClientRect();
+              var style=node.style;
+              var pxW=parseFloat(style.width)||r.width,pxH=parseFloat(style.height)||r.height;
+              return {u:node.getAttribute('data-u'),g:g,n:n,name:base?base.name:'Không rõ item',type:base?base.k:null,typeName:typeNames[base&&base.k]||'Chưa rõ',w:base?base.w:Math.round(pxW/36),h:base?base.h:Math.round(pxH/36),x:Math.round((parseFloat(style.left)||0)/36),y:Math.round((parseFloat(style.top)||0)/36),plus:Number((node.querySelector('em')||{}).textContent||'').replace?0:0,luck:null,option:null,excellent:null,equipped:false,known:!!base,icon:src,base:base||null,attributesStatus:'Cần đọc popup chi tiết'};
             });
             render(lastItems);
-            status.textContent='Đã đọc '+lastItems.length+' item từ state game. Không gửi lệnh bán.';
+            status.textContent='Đã đọc '+lastItems.length+' item từ DOM túi đồ và data/items.json. Thuộc tính riêng từng món cần lấy từ popup; chưa gửi lệnh bán.';
             makeReport(lastItems);
           }
           function render(items){
