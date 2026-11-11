@@ -372,11 +372,11 @@ class MainActivity : Activity() {
           function describe(el){if(!el)return null;var r=el.getBoundingClientRect();return {tag:el.tagName,id:el.id||'',className:typeof el.className==='string'?el.className.slice(0,300):'',text:(el.innerText||el.textContent||'').trim().replace(/\s+/g,' ').slice(0,350),attrs:attrs(el),rect:{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)},html:shortHtml(el)};}
           function candidates(){
             var all=Array.from(document.querySelectorAll('body *')).filter(visible);
-            var re=/(item|slot|bag|inventory|equip|goods|prop|grid|cell|popup|modal|window|panel|tip|detail|wbag|witem)/i;
+            var re=/(item|slot|bag|inventory|equip|goods|prop|grid|cell|popup|modal|window|panel|tip|detail|wbag|witem|^it$)/i;
             var found=all.filter(function(el){var s=(el.id||'')+' '+(typeof el.className==='string'?el.className:'')+' '+Array.from(el.attributes||[]).filter(function(a){return a.name.indexOf('data-')===0;}).map(function(a){return a.name+'='+a.value;}).join(' ');return re.test(s);});
             return {matched:found.slice(0,180).map(describe),visibleTextNodes:Array.from(document.querySelectorAll('button,a,[role=button]')).filter(visible).map(describe).slice(0,100)};
           }
-          function snapshot(label){var snap={label:label,time:new Date().toISOString(),url:location.href,title:document.title,bodyText:(document.body.innerText||'').slice(0,5000),elements:candidates(),visibleDialogs:Array.from(document.querySelectorAll('[role=dialog],.modal,.popup,[id*="wBag"],[id*="bag"],[id*="Bag"],[id*="item"],[id*="Item"]')).filter(visible).slice(0,35).map(describe)};report.steps.push(snap);report.clickCapture=null;render();status.textContent='Đã quét '+label+'. Không có thao tác thay đổi vật phẩm.';}
+          function snapshot(label){var snap={label:label,time:new Date().toISOString(),url:location.href,title:document.title,bodyText:(document.body.innerText||'').slice(0,5000),elements:candidates(),visibleDialogs:Array.from(document.querySelectorAll('[role=dialog],.modal,.popup,[id*="wBag"],[id*="bag"],[id*="Bag"],[id*="item"],[id*="Item"]')).filter(visible).slice(0,35).map(describe)};snap.clickCapture=report.clickCapture;report.steps.push(snap);render();status.textContent='Đã quét '+label+'. Không có thao tác thay đổi vật phẩm.';}
           function render(){var text=JSON.stringify(report,null,2);output.value=text;}
           root.querySelector('.gear').onclick=function(){panel.style.display=panel.style.display==='block'?'none':'block';};
           root.querySelector('#md-scan').onclick=function(){snapshot('inventory_scan');};
