@@ -365,7 +365,7 @@ class MainActivity : Activity() {
           root.innerHTML='<button class="gear" type="button">D</button><div class="panel"><div class="head">MU IDLE · INVENTORY DIAGNOSTIC</div><button class="action" id="md-scan">1. Quét túi đồ</button><button class="action" id="md-arm">2. Bắt lần bấm vào một món</button><button class="action" id="md-popup">3. Quét popup đang mở</button><button class="action" id="md-copy">Sao chép báo cáo</button><div class="status" id="md-status">Chỉ đọc dữ liệu giao diện. Không bán, không sửa hoặc di chuyển vật phẩm.</div><textarea id="md-output" readonly placeholder="Báo cáo Diagnostic sẽ hiện ở đây"></textarea></div>';
           document.documentElement.appendChild(root);
           var panel=root.querySelector('.panel'), output=root.querySelector('#md-output'), status=root.querySelector('#md-status');
-          var report={createdAt:new Date().toISOString(),page:location.href,steps:[],clickCapture:null};
+          var report={createdAt:new Date().toISOString(),page:location.href,steps:[],clickCapture:null,postClickSnapshots:[],sellCandidates:[]};
           function visible(el){if(!el||!el.getBoundingClientRect)return false;var r=el.getBoundingClientRect(),s=getComputedStyle(el);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)!==0;}
           function attrs(el){var o={};if(!el||!el.attributes)return o;Array.from(el.attributes).forEach(function(a){if(a.name==='style')return;if(a.name==='class'||a.name==='id'||a.name.indexOf('data-')===0||a.name==='role'||a.name==='onclick'||a.name==='title')o[a.name]=a.value.slice(0,300);});return o;}
           function shortHtml(el){return (el&&el.outerHTML?el.outerHTML:'').slice(0,1800);}
@@ -374,7 +374,10 @@ class MainActivity : Activity() {
             var all=Array.from(document.querySelectorAll('body *')).filter(visible);
             var re=/(item|slot|bag|inventory|equip|goods|prop|grid|cell|popup|modal|window|panel|tip|detail|wbag|witem|^it$)/i;
             var found=all.filter(function(el){var s=(el.id||'')+' '+(typeof el.className==='string'?el.className:'')+' '+Array.from(el.attributes||[]).filter(function(a){return a.name.indexOf('data-')===0;}).map(function(a){return a.name+'='+a.value;}).join(' ');return re.test(s);});
-            return {matched:found.slice(0,180).map(describe),visibleTextNodes:Array.from(document.querySelectorAll('button,a,[role=button]')).filter(visible).map(describe).slice(0,100)};
+            var controls=Array.from(document.querySelectorAll('button,a,[role=button],input[type=button],input[type=submit]')).filter(visible).map(describe).slice(0,140);
+            var sell=controls.filter(function(x){return /(bán|sell|出售|ขาย)/i.test((x.text||'')+' '+JSON.stringify(x.attrs||{}));});
+            report.sellCandidates=sell;
+            return {matched:found.slice(0,220).map(describe),visibleTextNodes:controls};
           }
           function snapshot(label){var snap={label:label,time:new Date().toISOString(),url:location.href,title:document.title,bodyText:(document.body.innerText||'').slice(0,5000),elements:candidates(),visibleDialogs:Array.from(document.querySelectorAll('[role=dialog],.modal,.popup,[id*="wBag"],[id*="bag"],[id*="Bag"],[id*="item"],[id*="Item"]')).filter(visible).slice(0,35).map(describe)};snap.clickCapture=report.clickCapture;report.steps.push(snap);render();status.textContent='Đã quét '+label+'. Không có thao tác thay đổi vật phẩm.';}
           function render(){var text=JSON.stringify(report,null,2);output.value=text;}
@@ -390,7 +393,8 @@ class MainActivity : Activity() {
               for(var i=0;el&&i<7;i++,el=el.parentElement)chain.push(describe(el));
               report.clickCapture={time:new Date().toISOString(),target:describe(ev.target),chain:chain,composedPath:path.slice(0,12).filter(function(x){return x&&x.tagName;}).map(describe)};
               document.removeEventListener('click',handler,true);
-              render();status.textContent='Đã ghi nhận lần bấm. Bây giờ mở popup chi tiết rồi chọn Quét popup đang mở.';
+              render();status.textContent='Đã ghi nhận click. Đang tự quét popup sau click…';
+              [120,450,1000,1800].forEach(function(ms){setTimeout(function(){snapshot('after_item_click_'+ms+'ms');var snap=report.steps[report.steps.length-1];report.postClickSnapshots.push({delayMs:ms,visibleDialogs:snap.visibleDialogs,bodyText:snap.bodyText,elements:snap.elements});render();},ms);});
             };
             document.addEventListener('click',handler,true);
           };
