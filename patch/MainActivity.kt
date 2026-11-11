@@ -445,7 +445,7 @@ class MainActivity : Activity() {
               var base=match?db[g+'_'+n]:null,r=node.getBoundingClientRect();
               var style=node.style;
               var pxW=parseFloat(style.width)||r.width,pxH=parseFloat(style.height)||r.height;
-              return {u:node.getAttribute('data-u'),g:g,n:n,name:base?base.name:'Không rõ item',type:base?base.k:null,typeName:typeNames[base&&base.k]||'Chưa rõ',w:base?base.w:Math.round(pxW/36),h:base?base.h:Math.round(pxH/36),x:Math.round((parseFloat(style.left)||0)/36),y:Math.round((parseFloat(style.top)||0)/36),plus:Number((node.querySelector('em')||{}).textContent||'').replace?0:0,luck:null,option:null,excellent:null,equipped:false,known:!!base,icon:src,base:base||null,attributesStatus:'Cần đọc popup chi tiết'};
+              return {u:node.getAttribute('data-u'),g:g,n:n,name:base?base.name:'Không rõ item',type:base?base.k:null,typeName:typeNames[base&&base.k]||'Chưa rõ',w:base?base.w:Math.round(pxW/36),h:base?base.h:Math.round(pxH/36),x:Math.round((parseFloat(style.left)||0)/36),y:Math.round((parseFloat(style.top)||0)/36),plus:(function(){var m=((node.querySelector('em')||{}).textContent||'').match(/\\+(\\d+)/);return m?Number(m[1]):0})(),luck:null,option:null,excellent:null,equipped:false,known:!!base,icon:src,base:base||null,attributesStatus:'Cần đọc popup chi tiết'};
             });
             render(lastItems);
             status.textContent='Đã đọc '+lastItems.length+' item từ DOM túi đồ và data/items.json. Thuộc tính riêng từng món cần lấy từ popup; chưa gửi lệnh bán.';
