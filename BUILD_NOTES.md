@@ -23,3 +23,12 @@ The Android WebView shell and the original game page are retained. The following
 ## Validation
 
 A successful Android build confirms compilation only. Live in-game testing is still required to verify the actual map list selectors, map transition timing, level threshold behavior, and Reset return behavior.
+
+
+## Inventory Diagnostic APK
+
+- Adds an on-screen read-only diagnostic panel, separate from Auto Move Map.
+- Scan visible inventory/modal DOM elements and buttons; capture one user-selected item click and inspect an open item-detail popup.
+- Copy a JSON report to Android clipboard for sharing in ChatGPT.
+- No sell, equip, move, or inventory mutation actions are implemented in Diagnostic mode.
+- A successful build confirms compilation only; actual DOM evidence must be collected from the live game.
