@@ -66,6 +66,7 @@ class MainActivity : Activity() {
                 CookieManager.getInstance().flush()
                 installAutoMoveMap()
                 installDiagnostic()
+                installInventoryInspector()
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
@@ -399,6 +400,85 @@ class MainActivity : Activity() {
             document.addEventListener('click',handler,true);
           };
           root.querySelector('#md-copy').onclick=function(){render();if(window.AndroidDiag&&AndroidDiag.copyReport)AndroidDiag.copyReport(output.value);else{output.focus();output.select();status.textContent='Không có cầu nối clipboard. Hãy sao chép nội dung trong ô.';}};
+        })();
+        """.trimIndent()
+        webView.evaluateJavascript(js, null)
+    }
+
+
+    private fun installInventoryInspector() {
+        val js = """
+        (function () {
+          if (window.__muInventoryInspectorInstalled) return;
+          window.__muInventoryInspectorInstalled = true;
+          var css = document.createElement('style');
+          css.textContent = '#mu-inv-inspector{position:fixed;z-index:2147483645;left:10px;bottom:12px;font:12px Arial,sans-serif;color:#f2dfb7}#mu-inv-inspector button,#mu-inv-inspector input{font:inherit;box-sizing:border-box}#mu-inv-inspector .gear{width:42px;height:42px;background:#21190f;color:#f3dfb5;border:1px solid #80683f}#mu-inv-inspector .panel{display:none;width:min(390px,calc(100vw - 20px));max-height:72vh;overflow:auto;background:#17130f;border:1px solid #80683f;padding:10px;box-shadow:0 5px 20px #000b;box-sizing:border-box}#mu-inv-inspector .head{font-weight:bold;margin-bottom:8px}#mu-inv-inspector .hint{color:#d9bd7d;font-size:11px;line-height:1.4;margin:6px 0}#mu-inv-inspector .actions{display:flex;gap:6px;flex-wrap:wrap}#mu-inv-inspector button.action{padding:7px;background:#382c1b;color:#f3dfb5;border:1px solid #80683f}#mu-inv-inspector label{display:inline-flex;align-items:center;gap:4px;margin:4px 8px 4px 0}#mu-inv-inspector .opts{border-top:1px solid #57452d;margin-top:8px;padding-top:7px}#mu-inv-inspector .status{margin:7px 0;color:#e8c979}#mu-inv-inspector .list{font-size:11px;line-height:1.45;max-height:32vh;overflow:auto}#mu-inv-inspector .item{padding:5px 0;border-top:1px solid #493a28}#mu-inv-inspector .sell{color:#ffcf75}#mu-inv-inspector .keep{color:#9bd49e}#mu-inv-inspector textarea{width:100%;height:70px;background:#0d0b08;color:#eee;border:1px solid #80683f}';
+          document.head.appendChild(css);
+          var root=document.createElement('div');root.id='mu-inv-inspector';
+          root.innerHTML='<button class="gear" type="button">INV</button><div class="panel"><div class="head">INVENTORY INSPECTOR · AUTO FILTER DRY RUN</div><div class="hint">Chỉ đọc dữ liệu game. Chế độ chạy thử không gửi lệnh bán hoặc thay đổi item.</div><div class="actions"><button class="action" id="mi-scan">Đọc túi đồ</button><button class="action" id="mi-dry">Chạy thử bộ lọc</button><button class="action" id="mi-copy">Sao chép báo cáo</button></div><div class="opts"><b>Loại item đưa vào kiểm tra bán</b><br><label><input type="checkbox" data-type="w">Vũ khí</label><label><input type="checkbox" data-type="s">Khiên</label><label><input type="checkbox" data-type="h">Mũ</label><label><input type="checkbox" data-type="a">Giáp</label><label><input type="checkbox" data-type="p">Quần</label><label><input type="checkbox" data-type="g">Găng</label><label><input type="checkbox" data-type="b">Giày</label></div><div class="opts"><b>Điều kiện giữ lại</b><br><label><input id="mi-ex" type="checkbox" checked>Excellent</label><label><input id="mi-luck" type="checkbox" checked>Luck</label><label><input id="mi-opt" type="checkbox" checked>Option</label><label>Giữ từ + <select id="mi-plus"><option value="0">Không xét</option><option value="3">+3</option><option value="4">+4</option><option value="5">+5</option><option value="6">+6</option><option value="7">+7</option><option value="9">+9</option></select></label></div><div class="status" id="mi-status">Chưa quét túi đồ.</div><div class="list" id="mi-list"></div><textarea id="mi-report" readonly placeholder="Báo cáo inventory"></textarea></div>';
+          document.documentElement.appendChild(root);
+          var panel=root.querySelector('.panel'),status=root.querySelector('#mi-status'),list=root.querySelector('#mi-list'),reportBox=root.querySelector('#mi-report'),lastItems=[];
+          var typeNames={w:'Vũ khí',s:'Khiên',h:'Mũ',a:'Giáp',p:'Quần',g:'Găng',b:'Giày',x:'Cánh'};
+          function readState(){try{return typeof d!=='undefined'&&d?d:null}catch(e){return null}}
+          function readDb(){try{return typeof r!=='undefined'&&r&&r.item?r.item:null}catch(e){return null}}
+          function selectedTypes(){var out={};root.querySelectorAll('[data-type]').forEach(function(x){if(x.checked)out[x.dataset.type]=true});return out}
+          function equippedIds(state){var ids={};Object.keys(state.eq||{}).forEach(function(k){var it=state.eq[k];if(it&&it.u!=null)ids[String(it.u)]=true});return ids}
+          function scan(){
+            var state=readState(),db=readDb();
+            if(!state||!Array.isArray(state.inv)||!db){status.textContent='Không đọc được state d.inv hoặc database r.item. Chưa có thao tác nào được thực hiện.';return}
+            var eq=equippedIds(state);
+            lastItems=state.inv.map(function(it){
+              var base=db[it.g+'_'+it.n]||null;
+              var cat=base?base.k:null;
+              var ex=Array.isArray(it.ex)?it.ex:[];
+              return {u:it.u,g:it.g,n:it.n,name:base?base.name:'Không rõ item',type:cat,typeName:typeNames[cat]||'Chưa rõ',w:it.w,h:it.h,x:it.x,y:it.y,plus:Number(it.l)||0,luck:!!it.lk,option:Number(it.o)||0,excellent:ex,equipped:!!eq[String(it.u)],known:!!base,base:base?{k:base.k,dl:base.dl,dmin:base.dmin,dmax:base.dmax,def:base.def,spd:base.spd,str:base.str,agi:base.agi,ene:base.ene,vit:base.vit}:null};
+            });
+            render(lastItems);
+            status.textContent='Đã đọc '+lastItems.length+' item từ state game. Không gửi lệnh bán.';
+            makeReport(lastItems);
+          }
+          function render(items){
+            list.innerHTML=items.map(function(it){
+              var attrs=[];
+              if(it.plus)attrs.push('+'+it.plus);
+              if(it.luck)attrs.push('Luck');
+              if(it.option)attrs.push('Option '+it.option);
+              if(it.excellent.length)attrs.push('EX '+it.excellent.join(','));
+              attrs.push(it.w+'×'+it.h+' ô · ('+it.x+','+it.y+')');
+              if(it.equipped)attrs.push('ĐANG TRANG BỊ');
+              if(!it.known)attrs.push('CHƯA NHẬN DIỆN');
+              return '<div class="item"><b>'+escapeHtml(it.name)+'</b> · '+escapeHtml(it.typeName)+' · ID '+it.u+'<br>'+escapeHtml(attrs.join(' · '))+'</div>';
+            }).join('');
+          }
+          function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+          function makeReport(items){var out={at:new Date().toISOString(),mode:'read-only',count:items.length,items:items};reportBox.value=JSON.stringify(out,null,2)}
+          function dryRun(){
+            if(!lastItems.length){scan();if(!lastItems.length)return}
+            var types=selectedTypes(),keepEx=root.querySelector('#mi-ex').checked,keepLuck=root.querySelector('#mi-luck').checked,keepOpt=root.querySelector('#mi-opt').checked,minPlus=Number(root.querySelector('#mi-plus').value)||0;
+            var rows=lastItems.map(function(it){
+              var reasons=[];
+              if(!it.known)reasons.push('Không nhận diện được');
+              if(it.equipped)reasons.push('Đang trang bị');
+              if(!it.known||it.equipped)return {item:it,decision:'KEEP',reason:reasons.join('; ')};
+              if(!types[it.type])return {item:it,decision:'KEEP',reason:'Loại item chưa được chọn để bán'};
+              if(keepEx&&it.excellent.length)reasons.push('Excellent');
+              if(keepLuck&&it.luck)reasons.push('Luck');
+              if(keepOpt&&it.option>0)reasons.push('Có Option');
+              if(minPlus>0&&it.plus>=minPlus)reasons.push('Đạt ngưỡng giữ +'+minPlus);
+              if(reasons.length)return {item:it,decision:'KEEP',reason:reasons.join('; ')};
+              return {item:it,decision:'CANDIDATE',reason:'Khớp loại đã chọn và không có điều kiện giữ'};
+            });
+            var candidates=rows.filter(function(x){return x.decision==='CANDIDATE'});
+            list.innerHTML=rows.map(function(x){var it=x.item;return '<div class="item '+(x.decision==='CANDIDATE'?'sell':'keep')+'"><b>'+escapeHtml(x.decision==='CANDIDATE'?'CÓ THỂ BÁN':'GIỮ')+'</b> · '+escapeHtml(it.name)+' · ID '+it.u+'<br>'+escapeHtml(x.reason||'Không khớp điều kiện bán')+' · '+it.w+'×'+it.h+' ô</div>'}).join('');
+            var out={at:new Date().toISOString(),mode:'DRY_RUN_ONLY_NO_SELL_COMMAND',total:rows.length,candidateCount:candidates.length,keepCount:rows.length-candidates.length,settings:{types:types,keepExcellent:keepEx,keepLuck:keepLuck,keepOption:keepOpt,minPlus:minPlus},results:rows.map(function(x){return {u:x.item.u,name:x.item.name,type:x.item.type,decision:x.decision,reason:x.reason,position:{x:x.item.x,y:x.item.y},size:{w:x.item.w,h:x.item.h},plus:x.item.plus,luck:x.item.luck,option:x.item.option,excellent:x.item.excellent}})};
+            reportBox.value=JSON.stringify(out,null,2);
+            status.textContent='Chạy thử hoàn tất: '+candidates.length+' ứng viên / '+rows.length+' item. Đây KHÔNG phải lệnh bán.';
+          }
+          root.querySelector('.gear').onclick=function(){panel.style.display=panel.style.display==='block'?'none':'block'};
+          root.querySelector('#mi-scan').onclick=scan;
+          root.querySelector('#mi-dry').onclick=dryRun;
+          root.querySelector('#mi-copy').onclick=function(){if(window.AndroidDiag&&AndroidDiag.copyReport)AndroidDiag.copyReport(reportBox.value);else{reportBox.focus();reportBox.select()}};
+          scan();
         })();
         """.trimIndent()
         webView.evaluateJavascript(js, null)
