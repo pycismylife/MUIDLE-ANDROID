@@ -434,6 +434,7 @@ class MainActivity : Activity() {
           }
           function excellentNames(ex){
             var names=['Sát thương xuất sắc +10%','Sát thương +2%','Tốc độ đánh +7','Hồi máu khi hạ quái','Máu tối đa +4%','Giảm sát thương 4%','Zen rơi +40%','Né đòn +10%','Sát thương + cấp / 20','Hồi mana khi hạ quái','Mana tối đa +4%','Phản 5% sát thương'];
+            if(ex==null)return [];
             if(!Array.isArray(ex))return null;
             return ex.map(function(code){var n=Number(code);return {code:code,name:names[n]||('Mã EX chưa giải mã: '+code)}});
           }
@@ -450,8 +451,8 @@ class MainActivity : Activity() {
             var equipped={};
             Object.keys(state.state.eq||{}).forEach(function(slot){var it=state.state.eq[slot];if(it&&it.u!=null)equipped[String(it.u)]=true});
             lastItems=items.map(function(it){
-              var key=String(it.g)+'_'+String(it.n),base=db[key]||null,kind=itemTypeByGroup(it.g),ex=excellentNames(it.ex);
-              return {u:it.u,g:it.g,n:it.n,name:base?base.name:'Không rõ item',type:kind,typeName:typeLabel(kind),w:Number(it.w)||(base&&base.w)||1,h:Number(it.h)||(base&&base.h)||1,x:Number(it.x)||0,y:Number(it.y)||0,plus:Number(it.l)||0,luck:it.lk===true||Number(it.lk)>0,option:Number(it.o)||0,excellent:ex,excellentCodes:Array.isArray(it.ex)?it.ex.slice():null,hasExcellent:Array.isArray(it.ex)&&it.ex.length>0,equipped:!!equipped[String(it.u)],known:!!base,icon:'ic166b57/'+key+(it.ex?'e':'')+'.webp',base:base?{k:base.k,dl:base.dl,dmin:base.dmin,dmax:base.dmax,def:base.def,spd:base.spd,str:base.str,agi:base.agi,ene:base.ene,vit:base.vit}:null,attributesStatus:'Đọc trực tiếp từ window.S.inv'};
+              var key=String(it.g)+'_'+String(it.n),base=db[key]||null,kind=itemTypeByGroup(it.g),ex=excellentNames(it.ex),exCodes=Array.isArray(it.ex)?it.ex.slice():(it.ex==null?[]:null);
+              return {u:it.u,g:it.g,n:it.n,name:base?base.name:'Không rõ item',type:kind,typeName:typeLabel(kind),w:Number(it.w)||(base&&base.w)||1,h:Number(it.h)||(base&&base.h)||1,x:Number(it.x)||0,y:Number(it.y)||0,plus:Number(it.l)||0,luck:it.lk===true||Number(it.lk)>0,option:Number(it.o)||0,excellent:ex,excellentCodes:exCodes,hasExcellent:Array.isArray(exCodes)&&exCodes.length>0,equipped:!!equipped[String(it.u)],known:!!base,icon:'ic166b57/'+key+(Array.isArray(exCodes)&&exCodes.length?'e':'')+'.webp',base:base?{k:base.k,dl:base.dl,dmin:base.dmin,dmax:base.dmax,def:base.def,spd:base.spd,str:base.str,agi:base.agi,ene:base.ene,vit:base.vit}:null,attributesStatus:'Đọc trực tiếp từ window.S.inv'};
             });
             render(lastItems);
             status.textContent='Đã đọc trực tiếp '+lastItems.length+' item từ window.S.inv; thuộc tính lấy từ instance. Chưa gửi lệnh bán.';
