@@ -420,7 +420,7 @@ class MainActivity : Activity() {
           var panel=root.querySelector('.panel'),status=root.querySelector('#mi-status'),list=root.querySelector('#mi-list'),reportBox=root.querySelector('#mi-report'),lastItems=[];
           var typeNames={w:'Vũ khí',s:'Khiên',h:'Mũ',a:'Giáp',p:'Quần',g:'Găng',b:'Giày',x:'Cánh'};
           var itemDb=null;
-          function readState(){return document.querySelector('#wBag .grid')||document.querySelector('#wBag .invz')||document.querySelector('.grid')}
+          function readState(){var nodes=Array.from(document.querySelectorAll('.it[data-u]'));if(!nodes.length)return null;var parent=nodes[0].parentElement;while(parent&&parent!==document.body&&!parent.querySelectorAll('.it[data-u]').length)parent=parent.parentElement;return parent||nodes[0].parentElement}
           async function readDb(){
             if(itemDb)return itemDb;
             try{
@@ -437,7 +437,7 @@ class MainActivity : Activity() {
             var grid=readState(),db=await readDb();
             if(!grid){status.textContent='Không tìm thấy vùng lưới túi đồ (.grid). Hãy mở túi đồ và thử lại.';return}
             if(!db){status.textContent='Đã thấy túi đồ nhưng chưa tải được danh mục /muidle/data/items.json. Chưa có thao tác nào được thực hiện.';return}
-            var nodes=Array.from(grid.querySelectorAll('.it[data-u]'));
+            var nodes=Array.from(grid.querySelectorAll('.it[data-u]'));if(!nodes.length)nodes=Array.from(document.querySelectorAll('.it[data-u]'));
             if(!nodes.length){status.textContent='Đã tìm thấy vùng túi nhưng chưa thấy item. Hãy mở túi đồ rồi đọc lại.';return}
             lastItems=nodes.map(function(node){
               var img=node.querySelector('img'),src=img?(img.getAttribute('src')||''):'';
