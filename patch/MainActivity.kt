@@ -392,14 +392,24 @@ class MainActivity : Activity() {
             var sell=path.find(function(el){return el&&el.matches&&el.matches('[data-k="sell"]')});
             if(!sell)return;
             var before=inventoryState();
-            var event={time:new Date().toISOString(),kind:'single_item_sell_button_click',button:describe(sell),popupText:(document.body.innerText||'').slice(-1800),inventoryBefore:before,after:[]};
+            var event={time:new Date().toISOString(),kind:'single_item_sell_button_click',button:describe(sell),popupText:(document.body.innerText||'').slice(-1800),inventoryBefore:before,inventoryAfter:null,afterScanStatus:'waiting_for_inventory_change'};
             report.sellEvents.push(event);render();
-            status.textContent='Đã bắt được click Bán. Đang theo dõi phản hồi game và túi đồ…';
-            [100,350,800,1500,3000,6000].forEach(function(ms){setTimeout(function(){
-              var snap={delayMs:ms,time:new Date().toISOString(),inventory:inventoryState(),popupVisible:visible(sell.closest('.popup,.modal,[role="dialog"]')),bodyTail:(document.body.innerText||'').slice(-1200)};
-              event.after.push(snap);render();
-              status.textContent='Đã lưu thao tác Bán và mốc '+ms+'ms. Nhấn Sao chép báo cáo khi hoàn tất.';
-            },ms);});
+            status.textContent='Đã quét túi trước khi bán. Đang chờ game cập nhật túi để quét lại đúng một lần…';
+            var beforeSignature=JSON.stringify(before);
+            var observer=new MutationObserver(function(){
+              var after=inventoryState();
+              if(JSON.stringify(after)!==beforeSignature){
+                observer.disconnect();
+                event.inventoryAfter=after;
+                event.afterScanStatus='completed';
+                event.afterTime=new Date().toISOString();
+                event.popupVisible=visible(sell.closest('.popup,.modal,[role="dialog"]'));
+                event.bodyTail=(document.body.innerText||'').slice(-1200);
+                render();
+                status.textContent='Đã quét túi trước và sau khi bán xong. Nhấn Sao chép báo cáo.';
+              }
+            });
+            observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});
           },true);
           root.querySelector('.gear').onclick=function(){panel.style.display=panel.style.display==='block'?'none':'block';};
           root.querySelector('#md-scan').onclick=function(){snapshot('inventory_scan');};
