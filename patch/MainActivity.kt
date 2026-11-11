@@ -415,7 +415,7 @@ class MainActivity : Activity() {
           css.textContent = '#mu-inv-inspector{position:fixed;z-index:2147483645;left:10px;bottom:12px;font:12px Arial,sans-serif;color:#f2dfb7}#mu-inv-inspector button,#mu-inv-inspector input{font:inherit;box-sizing:border-box}#mu-inv-inspector .gear{width:42px;height:42px;background:#21190f;color:#f3dfb5;border:1px solid #80683f}#mu-inv-inspector .panel{display:none;width:min(390px,calc(100vw - 20px));max-height:72vh;overflow:auto;background:#17130f;border:1px solid #80683f;padding:10px;box-shadow:0 5px 20px #000b;box-sizing:border-box}#mu-inv-inspector .head{font-weight:bold;margin-bottom:8px}#mu-inv-inspector .hint{color:#d9bd7d;font-size:11px;line-height:1.4;margin:6px 0}#mu-inv-inspector .actions{display:flex;gap:6px;flex-wrap:wrap}#mu-inv-inspector button.action{padding:7px;background:#382c1b;color:#f3dfb5;border:1px solid #80683f}#mu-inv-inspector label{display:inline-flex;align-items:center;gap:4px;margin:4px 8px 4px 0}#mu-inv-inspector .opts{border-top:1px solid #57452d;margin-top:8px;padding-top:7px}#mu-inv-inspector .status{margin:7px 0;color:#e8c979}#mu-inv-inspector .list{font-size:11px;line-height:1.45;max-height:32vh;overflow:auto}#mu-inv-inspector .item{padding:5px 0;border-top:1px solid #493a28}#mu-inv-inspector .sell{color:#ffcf75}#mu-inv-inspector .keep{color:#9bd49e}#mu-inv-inspector textarea{width:100%;height:70px;background:#0d0b08;color:#eee;border:1px solid #80683f}';
           document.head.appendChild(css);
           var root=document.createElement('div');root.id='mu-inv-inspector';
-          root.innerHTML='<button class="gear" type="button">INV</button><div class="panel"><div class="head">INVENTORY INSPECTOR · AUTO FILTER DRY RUN</div><div class="hint">Chỉ đọc dữ liệu game. Chế độ chạy thử không gửi lệnh bán hoặc thay đổi item.</div><div class="actions"><button class="action" id="mi-scan">Đọc túi đồ</button><button class="action" id="mi-dry">Chạy thử bộ lọc</button><button class="action" id="mi-copy">Sao chép báo cáo</button></div><div class="opts"><b>Loại item đưa vào kiểm tra bán</b><br><label><input type="checkbox" data-type="w">Vũ khí</label><label><input type="checkbox" data-type="s">Khiên</label><label><input type="checkbox" data-type="h">Mũ</label><label><input type="checkbox" data-type="a">Giáp</label><label><input type="checkbox" data-type="p">Quần</label><label><input type="checkbox" data-type="g">Găng</label><label><input type="checkbox" data-type="b">Giày</label></div><div class="opts"><b>Điều kiện giữ lại</b><br><label><input id="mi-ex" type="checkbox" checked>Excellent</label><label><input id="mi-luck" type="checkbox" checked>Luck</label><label><input id="mi-opt" type="checkbox" checked>Option</label><label>Giữ từ + <select id="mi-plus"><option value="0">Không xét</option><option value="3">+3</option><option value="4">+4</option><option value="5">+5</option><option value="6">+6</option><option value="7">+7</option><option value="9">+9</option></select></label></div><div class="status" id="mi-status">Chưa quét túi đồ.</div><div class="list" id="mi-list"></div><textarea id="mi-report" readonly placeholder="Báo cáo inventory"></textarea></div>';
+          root.innerHTML='<button class="gear" type="button">INV</button><div class="panel"><div class="head">INVENTORY INSPECTOR · AUTO FILTER DRY RUN</div><div class="hint">Chỉ đọc dữ liệu game. Chế độ chạy thử không gửi lệnh bán hoặc thay đổi item.</div><div class="actions"><button class="action" id="mi-scan">Đọc túi đồ</button><button class="action" id="mi-dry">Chạy thử bộ lọc</button><button class="action" id="mi-copy">Sao chép báo cáo</button><button class="action" id="mi-sell-probe">Kiểm tra cơ chế bán (không bán)</button></div><div class="opts"><b>Loại item đưa vào kiểm tra bán</b><br><label><input type="checkbox" data-type="w">Vũ khí</label><label><input type="checkbox" data-type="s">Khiên</label><label><input type="checkbox" data-type="h">Mũ</label><label><input type="checkbox" data-type="a">Giáp</label><label><input type="checkbox" data-type="p">Quần</label><label><input type="checkbox" data-type="g">Găng</label><label><input type="checkbox" data-type="b">Giày</label></div><div class="opts"><b>Điều kiện giữ lại</b><br><label><input id="mi-ex" type="checkbox" checked>Excellent</label><label><input id="mi-luck" type="checkbox" checked>Luck</label><label><input id="mi-opt" type="checkbox" checked>Option</label><label>Giữ từ + <select id="mi-plus"><option value="0">Không xét</option><option value="3">+3</option><option value="4">+4</option><option value="5">+5</option><option value="6">+6</option><option value="7">+7</option><option value="9">+9</option></select></label></div><div class="status" id="mi-status">Chưa quét túi đồ.</div><div class="list" id="mi-list"></div><textarea id="mi-report" readonly placeholder="Báo cáo inventory"></textarea></div>';
           document.documentElement.appendChild(root);
           var panel=root.querySelector('.panel'),status=root.querySelector('#mi-status'),list=root.querySelector('#mi-list'),reportBox=root.querySelector('#mi-report'),lastItems=[];
           var typeNames={w:'Vũ khí',s:'Khiên',h:'Mũ',a:'Giáp',p:'Quần',g:'Găng',b:'Giày',x:'Cánh'};
@@ -500,6 +500,32 @@ class MainActivity : Activity() {
           root.querySelector('#mi-scan').onclick=scan;
           root.querySelector('#mi-dry').onclick=dryRun;
           root.querySelector('#mi-copy').onclick=function(){if(window.AndroidDiag&&AndroidDiag.copyReport)AndroidDiag.copyReport(reportBox.value);else{reportBox.focus();reportBox.select()}};
+
+          function inspectSellMechanism(){
+            function fnInfo(fn){
+              if(typeof fn!=='function')return null;
+              var src='';
+              try{src=Function.prototype.toString.call(fn).slice(0,5000)}catch(e){src='[không đọc được source]'}
+              return {name:fn.name||'',source:src};
+            }
+            function elementInfo(id){
+              var el=document.getElementById(id);
+              if(!el)return null;
+              var jq=null;
+              try{if(window.jQuery&&jQuery._data){var ev=jQuery._data(el,'events')||{};jq=Object.keys(ev).map(function(k){return {type:k,handlers:ev[k].map(function(h){return fnInfo(h.handler)})}})}}catch(e){}
+              return {id:id,outerHTML:el.outerHTML.slice(0,3000),onclickAttribute:el.getAttribute('onclick'),onclick:fnInfo(el.onclick),jqueryEvents:jq};
+            }
+            var globals=[];
+            try{Object.getOwnPropertyNames(window).filter(function(k){return /sell|sale|item|inventory|inv/i.test(k)}).slice(0,150).forEach(function(k){
+              var v;try{v=window[k]}catch(e){v='[getter error]'}
+              if(typeof v==='function')globals.push({name:k,kind:'function',fn:fnInfo(v)});
+              else if(v&&typeof v==='object')globals.push({name:k,kind:'object',keys:Object.keys(v).slice(0,60)});
+            })}catch(e){}
+            var out={at:new Date().toISOString(),mode:'SELL_MECHANISM_INSPECTION_ONLY_NO_SELL',warning:'Không click nút bán, không gọi hàm bán, không thay đổi item.',buttons:[elementInfo('bSellAll'),elementInfo('bSellF')],globals:globals,inventoryCount:Array.isArray(window.S&&window.S.inv)?window.S.inv.length:null,hasJQuery:!!window.jQuery};
+            reportBox.value=JSON.stringify(out,null,2);
+            status.textContent='Đã kiểm tra cấu trúc nút/hàm bán. Không có lệnh bán nào được gửi. Sao chép báo cáo để xác định API an toàn.';
+          }
+          root.querySelector('#mi-sell-probe').onclick=inspectSellMechanism;
           scan();
         })();
         """.trimIndent()
