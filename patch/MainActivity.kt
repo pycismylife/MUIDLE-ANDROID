@@ -444,7 +444,7 @@ class MainActivity : Activity() {
           css.textContent = '#mu-inv-inspector{position:fixed;z-index:2147483645;left:10px;bottom:12px;font:12px Arial,sans-serif;color:#f2dfb7}#mu-inv-inspector button,#mu-inv-inspector input{font:inherit;box-sizing:border-box}#mu-inv-inspector .gear{width:42px;height:42px;background:#21190f;color:#f3dfb5;border:1px solid #80683f}#mu-inv-inspector .panel{display:none;width:min(390px,calc(100vw - 20px));max-height:72vh;overflow:auto;background:#17130f;border:1px solid #80683f;padding:10px;box-shadow:0 5px 20px #000b;box-sizing:border-box}#mu-inv-inspector .head{font-weight:bold;margin-bottom:8px}#mu-inv-inspector .hint{color:#d9bd7d;font-size:11px;line-height:1.4;margin:6px 0}#mu-inv-inspector .actions{display:flex;gap:6px;flex-wrap:wrap}#mu-inv-inspector button.action{padding:7px;background:#382c1b;color:#f3dfb5;border:1px solid #80683f}#mu-inv-inspector label{display:inline-flex;align-items:center;gap:4px;margin:4px 8px 4px 0}#mu-inv-inspector .opts{border-top:1px solid #57452d;margin-top:8px;padding-top:7px}#mu-inv-inspector .status{margin:7px 0;color:#e8c979}#mu-inv-inspector .list{font-size:11px;line-height:1.45;max-height:32vh;overflow:auto}#mu-inv-inspector .item{padding:5px 0;border-top:1px solid #493a28}#mu-inv-inspector .sell{color:#ffcf75}#mu-inv-inspector .keep{color:#9bd49e}#mu-inv-inspector textarea{width:100%;height:70px;background:#0d0b08;color:#eee;border:1px solid #80683f}';
           document.head.appendChild(css);
           var root=document.createElement('div');root.id='mu-inv-inspector';
-          root.innerHTML='<button class="gear" type="button">INV</button><div class="panel"><div class="head">INVENTORY INSPECTOR · AUTO FILTER DRY RUN</div><div class="hint">Chỉ đọc dữ liệu game. Chế độ chạy thử không gửi lệnh bán hoặc thay đổi item.</div><div class="actions"><button class="action" id="mi-scan">Đọc túi đồ</button><button class="action" id="mi-dry">Chạy thử bộ lọc</button><button class="action" id="mi-copy">Sao chép báo cáo</button><button class="action" id="mi-sell-probe">Kiểm tra cơ chế bán (không bán)</button></div><div class="opts"><b>Loại item đưa vào kiểm tra bán</b><br><label><input type="checkbox" data-type="w">Vũ khí</label><label><input type="checkbox" data-type="s">Khiên</label><label><input type="checkbox" data-type="h">Mũ</label><label><input type="checkbox" data-type="a">Giáp</label><label><input type="checkbox" data-type="p">Quần</label><label><input type="checkbox" data-type="g">Găng</label><label><input type="checkbox" data-type="b">Giày</label></div><div class="opts"><b>Điều kiện giữ lại</b><br><label><input id="mi-ex" type="checkbox" checked>Excellent</label><label><input id="mi-luck" type="checkbox" checked>Luck</label><label><input id="mi-opt" type="checkbox" checked>Option</label><label>Giữ từ + <select id="mi-plus"><option value="0">Không xét</option><option value="3">+3</option><option value="4">+4</option><option value="5">+5</option><option value="6">+6</option><option value="7">+7</option><option value="9">+9</option></select></label></div><div class="status" id="mi-status">Chưa quét túi đồ.</div><div class="list" id="mi-list"></div><textarea id="mi-report" readonly placeholder="Báo cáo inventory"></textarea></div>';
+          root.innerHTML='<button class="gear" type="button">INV</button><div class="panel"><div class="head">INVENTORY INSPECTOR · AUTO FILTER DRY RUN</div><div class="hint">Chỉ đọc dữ liệu game. Chế độ chạy thử không gửi lệnh bán hoặc thay đổi item.</div><div class="actions"><button class="action" id="mi-scan">Đọc túi đồ</button><button class="action" id="mi-dry">Chạy thử bộ lọc</button><button class="action" id="mi-copy">Sao chép báo cáo</button><button class="action" id="mi-sell-probe">Kiểm tra cơ chế bán (không bán)</button><button class="action" id="mi-sell-one">BÁN THỬ 1 ỨNG VIÊN</button></div><div class="opts"><b>Loại item đưa vào kiểm tra bán</b><br><label><input type="checkbox" data-type="w">Vũ khí</label><label><input type="checkbox" data-type="s">Khiên</label><label><input type="checkbox" data-type="h">Mũ</label><label><input type="checkbox" data-type="a">Giáp</label><label><input type="checkbox" data-type="p">Quần</label><label><input type="checkbox" data-type="g">Găng</label><label><input type="checkbox" data-type="b">Giày</label></div><div class="opts"><b>Điều kiện giữ lại</b><br><label><input id="mi-ex" type="checkbox" checked>Excellent</label><label><input id="mi-luck" type="checkbox" checked>Luck</label><label><input id="mi-opt" type="checkbox" checked>Option</label><label>Giữ từ + <select id="mi-plus"><option value="0">Không xét</option><option value="3">+3</option><option value="4">+4</option><option value="5">+5</option><option value="6">+6</option><option value="7">+7</option><option value="9">+9</option></select></label></div><div class="status" id="mi-status">Chưa quét túi đồ.</div><div class="list" id="mi-list"></div><textarea id="mi-report" readonly placeholder="Báo cáo inventory"></textarea></div>';
           document.documentElement.appendChild(root);
           var panel=root.querySelector('.panel'),status=root.querySelector('#mi-status'),list=root.querySelector('#mi-list'),reportBox=root.querySelector('#mi-report'),lastItems=[];
           var typeNames={w:'Vũ khí',s:'Khiên',h:'Mũ',a:'Giáp',p:'Quần',g:'Găng',b:'Giày',x:'Cánh'};
@@ -557,6 +557,83 @@ class MainActivity : Activity() {
             status.textContent='Đã kiểm tra cấu trúc nút/hàm bán. Không có lệnh bán nào được gửi. Sao chép báo cáo để xác định API an toàn.';
           }
           root.querySelector('#mi-sell-probe').onclick=inspectSellMechanism;
+
+          // Safe single-item execution: never batch, never use native sell-all.
+          var sellingOne=false;
+          function waitFor(test,timeout){
+            return new Promise(function(resolve){
+              var started=Date.now();
+              (function check(){
+                var value=false;try{value=test()}catch(e){}
+                if(value){resolve(value);return}
+                if(Date.now()-started>=timeout){resolve(false);return}
+                setTimeout(check,120);
+              })();
+            });
+          }
+          async function sellOneCandidate(){
+            if(sellingOne)return;
+            sellingOne=true;
+            var btn=root.querySelector('#mi-sell-one');
+            btn.disabled=true;
+            try{
+              await scan();
+              var types=selectedTypes(),keepEx=root.querySelector('#mi-ex').checked,keepLuck=root.querySelector('#mi-luck').checked,keepOpt=root.querySelector('#mi-opt').checked,minPlus=Number(root.querySelector('#mi-plus').value)||0;
+              var state=readState(),items=state.items,db=state.catalog;
+              if(!Array.isArray(items)||!db){status.textContent='Không đọc được inventory/catalog. Đã dừng an toàn.';return}
+              var equipped={};
+              Object.keys(state.state.eq||{}).forEach(function(k){var it=state.state.eq[k];if(it&&it.u!=null)equipped[String(it.u)]=true});
+              var candidates=[];
+              items.forEach(function(it){
+                var key=String(it.g)+'_'+String(it.n),base=db[key],type=itemTypeByGroup(it.g);
+                if(!base||!type||equipped[String(it.u)]||!types[type])return;
+                var ex=Array.isArray(it.ex)?it.ex:(it.ex==null?[]:null);
+                if(ex===null)return;
+                var hasLuck=it.lk===true||Number(it.lk)>0,hasOption=Number(it.o)>0,plus=Number(it.l)||0;
+                if(keepEx&&ex.length)return;
+                if(keepLuck&&hasLuck)return;
+                if(keepOpt&&hasOption)return;
+                if(minPlus>0&&plus>=minPlus)return;
+                candidates.push({u:it.u,g:it.g,n:it.n,name:base.name||'Item',type:type});
+              });
+              if(!candidates.length){status.textContent='Không có ứng viên đủ điều kiện. Không bán món nào.';return}
+              var target=candidates[0];
+              var node=Array.from(document.querySelectorAll('.it[data-u]')).find(function(el){return String(el.getAttribute('data-u'))===String(target.u)});
+              if(!node){status.textContent='Không tìm thấy ô đồ ID '+target.u+'. Đã dừng, không bán.';return}
+              var before=JSON.stringify(items.find(function(it){return String(it.u)===String(target.u)}));
+              status.textContent='Đang mở đúng 1 món: '+target.name+' · ID '+target.u;
+              node.click();
+              var sellButton=await waitFor(function(){
+                var el=document.querySelector('button[data-k="sell"]');
+                if(!el)return false;
+                var r=el.getBoundingClientRect(),cs=getComputedStyle(el);
+                return r.width>0&&r.height>0&&cs.display!=='none'&&cs.visibility!=='hidden'?el:false;
+              },2500);
+              if(!sellButton){status.textContent='Không thấy nút Bán trong popup. Dừng, chưa gửi lệnh bán.';return}
+              // Re-check item and equipped status immediately before the irreversible action.
+              var current=(window.S&&Array.isArray(window.S.inv))?window.S.inv.find(function(it){return String(it.u)===String(target.u)}):null;
+              if(!current||JSON.stringify(current)!==before||equipped[String(target.u)]){
+                status.textContent='Item đã thay đổi hoặc không còn hợp lệ. Đã hủy thao tác bán.';
+                return;
+              }
+              status.textContent='Đang gửi đúng 1 lệnh bán cho ID '+target.u+'; chờ xác minh inventory…';
+              sellButton.click();
+              var removed=await waitFor(function(){
+                return !(window.S&&Array.isArray(window.S.inv)&&window.S.inv.some(function(it){return String(it.u)===String(target.u)}));
+              },3500);
+              if(removed){
+                status.textContent='Đã xác minh ID '+target.u+' biến mất khỏi inventory. Chưa tự bán món tiếp theo.';
+                await scan();
+              }else{
+                status.textContent='Chưa xác minh được ID '+target.u+' đã bán. Dừng ngay; không thử lại để tránh bán nhầm.';
+              }
+            }catch(e){
+              status.textContent='Lỗi khi bán thử: '+String(e)+' · Đã dừng.';
+            }finally{
+              sellingOne=false;btn.disabled=false;
+            }
+          }
+          root.querySelector('#mi-sell-one').onclick=sellOneCandidate;
           scan();
         })();
         """.trimIndent()
