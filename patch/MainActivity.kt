@@ -472,9 +472,9 @@ class MainActivity : Activity() {
             }
             lastItems=nodes.map(function(node){
               var img=node.matches('img')?node:node.querySelector('img'),src=img?(img.getAttribute('src')||''):'';
-              var match=src.match(/(?:^|\/)(\d+)_(\d+)(?:\.[a-z0-9]+)(?:\?|$)/i);
-              var g=match?Number(match[1]):null,n=match?Number(match[2]):null;
-              var base=match?db[g+'_'+n]:null,r=node.getBoundingClientRect(),style=node.style||{};
+              var match=src.match(/(?:^|\/)(\d+)_(\d+[a-z]*)(?:\.[a-z0-9]+)(?:\?|$)/i);
+              var g=match?Number(match[1]):null,n=match?match[2]:null;
+              var base=match?(db[g+'_'+n]||db[g+'_'+String(parseInt(n,10))]||null):null,r=node.getBoundingClientRect(),style=node.style||{};
               var pxW=parseFloat(style.width)||r.width,pxH=parseFloat(style.height)||r.height;
               var pos=node.getAttribute('style')||'';
               var left=(pos.match(/left:\s*([\d.]+)px/)||[])[1],top=(pos.match(/top:\s*([\d.]+)px/)||[])[1];
@@ -509,7 +509,8 @@ class MainActivity : Activity() {
               if(it.equipped)reasons.push('Đang trang bị');
               if(!it.known||it.equipped)return {item:it,decision:'KEEP',reason:reasons.join('; ')};
               if(!types[it.type])return {item:it,decision:'KEEP',reason:'Loại item chưa được chọn để bán'};
-              if(keepEx&&it.excellent&&it.excellent.length)reasons.push('Excellent');
+              if(it.excellent===null||it.luck===null||it.option===null)return {item:it,decision:'KEEP',reason:'Chưa đọc đủ thuộc tính Excellent/Luck/Option — giữ an toàn'};
+              if(keepEx&&it.excellent.length)reasons.push('Excellent');
               if(keepLuck&&it.luck===true)reasons.push('Luck');
               if(keepOpt&&Number(it.option)>0)reasons.push('Có Option');
               if(minPlus>0&&it.plus>=minPlus)reasons.push('Đạt ngưỡng giữ +'+minPlus);
