@@ -366,7 +366,7 @@ class MainActivity : Activity() {
           root.innerHTML='<button class="gear" type="button">D</button><div class="panel"><div class="head">MU IDLE · INVENTORY DIAGNOSTIC</div><button class="action" id="md-scan">1. Quét túi đồ</button><button class="action" id="md-arm">2. Bắt lần bấm vào một món</button><button class="action" id="md-popup">3. Quét popup đang mở</button><button class="action" id="md-copy">Sao chép báo cáo</button><div class="status" id="md-status">Chỉ đọc dữ liệu giao diện. Không bán, không sửa hoặc di chuyển vật phẩm.</div><textarea id="md-output" readonly placeholder="Báo cáo Diagnostic sẽ hiện ở đây"></textarea></div>';
           document.documentElement.appendChild(root);
           var panel=root.querySelector('.panel'), output=root.querySelector('#md-output'), status=root.querySelector('#md-status');
-          var report={createdAt:new Date().toISOString(),page:location.href,steps:[],clickCapture:null,postClickSnapshots:[],sellCandidates:[]};
+          var report={createdAt:new Date().toISOString(),page:location.href,steps:[],clickCapture:null,postClickSnapshots:[],sellCandidates:[],sellEvents:[]}; try{var saved=localStorage.getItem('mu_diag_sell_report_v1');if(saved){var prior=JSON.parse(saved);if(prior&&prior.sellEvents)report=prior;}}catch(e){}
           function visible(el){if(!el||!el.getBoundingClientRect)return false;var r=el.getBoundingClientRect(),s=getComputedStyle(el);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)!==0;}
           function attrs(el){var o={};if(!el||!el.attributes)return o;Array.from(el.attributes).forEach(function(a){if(a.name==='style')return;if(a.name==='class'||a.name==='id'||a.name.indexOf('data-')===0||a.name==='role'||a.name==='onclick'||a.name==='title')o[a.name]=a.value.slice(0,300);});return o;}
           function shortHtml(el){return (el&&el.outerHTML?el.outerHTML:'').slice(0,1800);}
@@ -381,7 +381,26 @@ class MainActivity : Activity() {
             return {matched:found.slice(0,220).map(describe),visibleTextNodes:controls};
           }
           function snapshot(label){var snap={label:label,time:new Date().toISOString(),url:location.href,title:document.title,bodyText:(document.body.innerText||'').slice(0,5000),elements:candidates(),visibleDialogs:Array.from(document.querySelectorAll('[role=dialog],.modal,.popup,[id*="wBag"],[id*="bag"],[id*="Bag"],[id*="item"],[id*="Item"]')).filter(visible).slice(0,35).map(describe)};snap.clickCapture=report.clickCapture;report.steps.push(snap);render();status.textContent='Đã quét '+label+'. Không có thao tác thay đổi vật phẩm.';}
-          function render(){var text=JSON.stringify(report,null,2);output.value=text;}
+          function render(){var text=JSON.stringify(report,null,2);output.value=text;try{localStorage.setItem('mu_diag_sell_report_v1',text);}catch(e){status.textContent='Bộ nhớ đầy, hãy sao chép báo cáo ngay.';}}
+          function inventoryState(){
+            var inv=window.S&&Array.isArray(window.S.inv)?window.S.inv:null;
+            return {count:inv?inv.length:null,items:inv?inv.map(function(it){return {u:it.u,g:it.g,n:it.n,l:it.l,lk:it.lk,o:it.o,ex:it.ex,x:it.x,y:it.y}}):null};
+          }
+          document.addEventListener('click',function(ev){
+            if(root.contains(ev.target))return;
+            var path=ev.composedPath?ev.composedPath():[];
+            var sell=path.find(function(el){return el&&el.matches&&el.matches('[data-k="sell"]')});
+            if(!sell)return;
+            var before=inventoryState();
+            var event={time:new Date().toISOString(),kind:'single_item_sell_button_click',button:describe(sell),popupText:(document.body.innerText||'').slice(-1800),inventoryBefore:before,after:[]};
+            report.sellEvents.push(event);render();
+            status.textContent='Đã bắt được click Bán. Đang theo dõi phản hồi game và túi đồ…';
+            [100,350,800,1500,3000,6000].forEach(function(ms){setTimeout(function(){
+              var snap={delayMs:ms,time:new Date().toISOString(),inventory:inventoryState(),popupVisible:visible(sell.closest('.popup,.modal,[role="dialog"]')),bodyTail:(document.body.innerText||'').slice(-1200)};
+              event.after.push(snap);render();
+              status.textContent='Đã lưu thao tác Bán và mốc '+ms+'ms. Nhấn Sao chép báo cáo khi hoàn tất.';
+            },ms);});
+          },true);
           root.querySelector('.gear').onclick=function(){panel.style.display=panel.style.display==='block'?'none':'block';};
           root.querySelector('#md-scan').onclick=function(){snapshot('inventory_scan');};
           root.querySelector('#md-popup').onclick=function(){snapshot('popup_scan');};
@@ -399,7 +418,7 @@ class MainActivity : Activity() {
             };
             document.addEventListener('click',handler,true);
           };
-          root.querySelector('#md-copy').onclick=function(){render();if(window.AndroidDiag&&AndroidDiag.copyReport)AndroidDiag.copyReport(output.value);else{output.focus();output.select();status.textContent='Không có cầu nối clipboard. Hãy sao chép nội dung trong ô.';}};
+          root.querySelector('#md-copy').onclick=function(){render();if(window.AndroidDiag&&AndroidDiag.copyReport)AndroidDiag.copyReport(output.value);else{output.focus();output.select();status.textContent='Không có cầu nối clipboard. Hãy sao chép nội dung trong ô.';}}; render(); if(report.sellEvents&&report.sellEvents.length)status.textContent='Đã khôi phục '+report.sellEvents.length+' lần bấm Bán từ bộ nhớ.';
         })();
         """.trimIndent()
         webView.evaluateJavascript(js, null)
