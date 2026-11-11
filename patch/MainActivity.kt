@@ -424,18 +424,19 @@ class MainActivity : Activity() {
           async function readDb(){
             if(itemDb)return itemDb;
             try{
-              var response=await fetch(new URL('data/items.json',location.href).href,{credentials:'same-origin',cache:'force-cache'});
+              var response=await fetch(new URL('/muidle/data/items.json',location.origin).href,{credentials:'same-origin',cache:'no-cache'});
               if(!response.ok)throw new Error('HTTP '+response.status);
               var rows=await response.json();itemDb={};
               rows.forEach(function(row){itemDb[row.g+'_'+row.n]=row});
               return itemDb;
-            }catch(e){return null}
+            }catch(e){status.textContent='Không tải được danh mục item: '+String(e&&e.message||e)+'.';return null}
           }
           function selectedTypes(){var out={};root.querySelectorAll('[data-type]').forEach(function(x){if(x.checked)out[x.dataset.type]=true});return out}
           function equippedIds(state){var ids={};Object.keys(state.eq||{}).forEach(function(k){var it=state.eq[k];if(it&&it.u!=null)ids[String(it.u)]=true});return ids}
           async function scan(){
             var grid=readState(),db=await readDb();
-            if(!grid||!db){status.textContent='Chưa tìm thấy lưới túi đồ hoặc không tải được data/items.json. Chưa có thao tác nào được thực hiện.';return}
+            if(!grid){status.textContent='Không tìm thấy vùng lưới túi đồ (.grid). Hãy mở túi đồ và thử lại.';return}
+            if(!db){status.textContent='Đã thấy túi đồ nhưng chưa tải được danh mục /muidle/data/items.json. Chưa có thao tác nào được thực hiện.';return}
             var nodes=Array.from(grid.querySelectorAll('.it[data-u]'));
             if(!nodes.length){status.textContent='Đã tìm thấy vùng túi nhưng chưa thấy item. Hãy mở túi đồ rồi đọc lại.';return}
             lastItems=nodes.map(function(node){
