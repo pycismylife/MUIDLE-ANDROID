@@ -420,7 +420,27 @@ class MainActivity : Activity() {
           var panel=root.querySelector('.panel'),status=root.querySelector('#mi-status'),list=root.querySelector('#mi-list'),reportBox=root.querySelector('#mi-report'),lastItems=[];
           var typeNames={w:'Vũ khí',s:'Khiên',h:'Mũ',a:'Giáp',p:'Quần',g:'Găng',b:'Giày',x:'Cánh'};
           var itemDb=null;
-          function readState(){var nodes=Array.from(document.querySelectorAll('.it[data-u]'));if(!nodes.length)return null;var parent=nodes[0].parentElement;while(parent&&parent!==document.body&&!parent.querySelectorAll('.it[data-u]').length)parent=parent.parentElement;return parent||nodes[0].parentElement}
+          function findInventoryGrid(){
+            var grids=Array.from(document.querySelectorAll('.grid'));
+            var scored=grids.map(function(el){return {el:el,items:el.querySelectorAll('.it[data-u], [data-u] img, .it img').length,rect:el.getBoundingClientRect()}});
+            scored.sort(function(a,b){return b.items-a.items});
+            if(scored.length&&scored[0].items>0)return scored[0].el;
+            var bag=document.querySelector('#wBag,.bag,.inventory,[id*="Bag"],[class*="bag"],[class*="Bag"]');
+            return bag||null;
+          }
+          function findItemNodes(scope){
+            var selectors=['.it[data-u]','[data-u].it','.grid .it','[data-u]'];
+            var found=[];
+            selectors.forEach(function(sel){var list=Array.from((scope||document).querySelectorAll(sel));list.forEach(function(el){if(el.querySelector('img')&&!found.includes(el))found.push(el)})});
+            if(!found.length){
+              Array.from((scope||document).querySelectorAll('.grid img')).forEach(function(img){
+                var el=img.closest('.it')||img.parentElement;
+                if(el&&!found.includes(el))found.push(el);
+              });
+            }
+            return found;
+          }
+          function readState(){var grid=findInventoryGrid();var nodes=findItemNodes(grid||document);return {grid:grid,nodes:nodes,grids:document.querySelectorAll('.grid').length,allDataU:document.querySelectorAll('[data-u]').length,allItemClass:document.querySelectorAll('.it').length}}
           async function readDb(){
             if(itemDb)return itemDb;
             try{
@@ -433,21 +453,34 @@ class MainActivity : Activity() {
           }
           function selectedTypes(){var out={};root.querySelectorAll('[data-type]').forEach(function(x){if(x.checked)out[x.dataset.type]=true});return out}
           function equippedIds(state){var ids={};Object.keys(state.eq||{}).forEach(function(k){var it=state.eq[k];if(it&&it.u!=null)ids[String(it.u)]=true});return ids}
-          async function scan(){
-            var grid=readState(),db=await readDb();
-            if(!grid){status.textContent='Không tìm thấy vùng lưới túi đồ (.grid). Hãy mở túi đồ và thử lại.';return}
-            if(!db){status.textContent='Đã thấy túi đồ nhưng chưa tải được danh mục /muidle/data/items.json. Chưa có thao tác nào được thực hiện.';return}
-            var nodes=Array.from(grid.querySelectorAll('.it[data-u]'));if(!nodes.length)nodes=Array.from(document.querySelectorAll('.it[data-u]'));
-            if(!nodes.length){status.textContent='Đã tìm thấy vùng túi nhưng chưa thấy item. Hãy mở túi đồ rồi đọc lại.';return}
+          async function scan(attempt){
+            attempt=attempt||0;
+            var state=readState(),db=await readDb();
+            if(!db){reportBox.value=JSON.stringify({error:'catalog_load_failed',url:'/muidle/data/items.json'},null,2);return}
+            var nodes=state.nodes||[];
+            if(!nodes.length&&attempt<6){
+              status.textContent='Đang chờ game dựng dữ liệu túi đồ ('+(attempt+1)+'/6)…';
+              setTimeout(function(){scan(attempt+1)},500);
+              return;
+            }
+            if(!nodes.length){
+              var diagnostic={at:new Date().toISOString(),mode:'READ_ONLY_DIAGNOSTIC',error:'inventory_nodes_not_found',url:location.href,bagOpen:!!document.querySelector('#wBag,.bag,.inventory,[id*="Bag"],[class*="bag"],[class*="Bag"]'),gridCount:state.grids,dataUCount:state.allDataU,itemClassCount:state.allItemClass,gridHtml:Array.from(document.querySelectorAll('.grid')).slice(0,4).map(function(el){return el.outerHTML.slice(0,5000)}),bagHtml:(state.grid||document.querySelector('#wBag,.bag,.inventory,[id*="Bag"],[class*="bag"],[class*="Bag"]')||{}).innerHTML?((state.grid||document.querySelector('#wBag,.bag,.inventory,[id*="Bag"],[class*="bag"],[class*="Bag"]')).innerHTML.slice(0,7000)):null};
+              reportBox.value=JSON.stringify(diagnostic,null,2);
+              status.textContent='Chưa tìm thấy node item sau 3 giây. Đã ghi chẩn đoán DOM vào báo cáo; không có thao tác bán.';
+              list.innerHTML='';
+              return;
+            }
             lastItems=nodes.map(function(node){
-              var img=node.querySelector('img'),src=img?(img.getAttribute('src')||''):'';
+              var img=node.matches('img')?node:node.querySelector('img'),src=img?(img.getAttribute('src')||''):'';
               var match=src.match(/(?:^|\/)(\d+)_(\d+)(?:\.[a-z0-9]+)(?:\?|$)/i);
               var g=match?Number(match[1]):null,n=match?Number(match[2]):null;
-              var base=match?db[g+'_'+n]:null,r=node.getBoundingClientRect();
-              var style=node.style;
+              var base=match?db[g+'_'+n]:null,r=node.getBoundingClientRect(),style=node.style||{};
               var pxW=parseFloat(style.width)||r.width,pxH=parseFloat(style.height)||r.height;
-              return {u:node.getAttribute('data-u'),g:g,n:n,name:base?base.name:'Không rõ item',type:base?base.k:null,typeName:typeNames[base&&base.k]||'Chưa rõ',w:base?base.w:Math.round(pxW/36),h:base?base.h:Math.round(pxH/36),x:Math.round((parseFloat(style.left)||0)/36),y:Math.round((parseFloat(style.top)||0)/36),plus:(function(){var m=((node.querySelector('em')||{}).textContent||'').match(/\\+(\\d+)/);return m?Number(m[1]):0})(),luck:null,option:null,excellent:null,equipped:false,known:!!base,icon:src,base:base||null,attributesStatus:'Cần đọc popup chi tiết'};
-            });
+              var pos=node.getAttribute('style')||'';
+              var left=(pos.match(/left:\s*([\d.]+)px/)||[])[1],top=(pos.match(/top:\s*([\d.]+)px/)||[])[1];
+              var itemId=node.getAttribute('data-u')||(node.closest('[data-u]')||{}).getAttribute&&node.closest('[data-u]').getAttribute('data-u');
+              return {u:itemId,g:g,n:n,name:base?base.name:'Không rõ item',type:base?base.k:null,typeName:typeNames[base&&base.k]||'Chưa rõ',w:base?base.w:Math.max(1,Math.round(pxW/36)),h:base?base.h:Math.max(1,Math.round(pxH/36)),x:Math.round((Number(left)||0)/36),y:Math.round((Number(top)||0)/36),plus:(function(){var m=((node.querySelector('em')||{}).textContent||'').match(/\+(\d+)/);return m?Number(m[1]):0})(),luck:null,option:null,excellent:null,equipped:false,known:!!base,icon:src,base:base||null,attributesStatus:'Cần đọc popup chi tiết'};
+            }).filter(function(it){return it.icon||it.u});
             render(lastItems);
             status.textContent='Đã đọc '+lastItems.length+' item từ DOM túi đồ và data/items.json. Thuộc tính riêng từng món cần lấy từ popup; chưa gửi lệnh bán.';
             makeReport(lastItems);
@@ -458,7 +491,7 @@ class MainActivity : Activity() {
               if(it.plus)attrs.push('+'+it.plus);
               if(it.luck)attrs.push('Luck');
               if(it.option)attrs.push('Option '+it.option);
-              if(it.excellent.length)attrs.push('EX '+it.excellent.join(','));
+              if(it.excellent&&it.excellent.length)attrs.push('EX '+it.excellent.join(','));
               attrs.push(it.w+'×'+it.h+' ô · ('+it.x+','+it.y+')');
               if(it.equipped)attrs.push('ĐANG TRANG BỊ');
               if(!it.known)attrs.push('CHƯA NHẬN DIỆN');
@@ -476,9 +509,9 @@ class MainActivity : Activity() {
               if(it.equipped)reasons.push('Đang trang bị');
               if(!it.known||it.equipped)return {item:it,decision:'KEEP',reason:reasons.join('; ')};
               if(!types[it.type])return {item:it,decision:'KEEP',reason:'Loại item chưa được chọn để bán'};
-              if(keepEx&&it.excellent.length)reasons.push('Excellent');
-              if(keepLuck&&it.luck)reasons.push('Luck');
-              if(keepOpt&&it.option>0)reasons.push('Có Option');
+              if(keepEx&&it.excellent&&it.excellent.length)reasons.push('Excellent');
+              if(keepLuck&&it.luck===true)reasons.push('Luck');
+              if(keepOpt&&Number(it.option)>0)reasons.push('Có Option');
               if(minPlus>0&&it.plus>=minPlus)reasons.push('Đạt ngưỡng giữ +'+minPlus);
               if(reasons.length)return {item:it,decision:'KEEP',reason:reasons.join('; ')};
               return {item:it,decision:'CANDIDATE',reason:'Khớp loại đã chọn và không có điều kiện giữ'};
