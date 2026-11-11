@@ -616,34 +616,16 @@ class MainActivity : Activity() {
                 status.textContent='Item đã thay đổi hoặc không còn hợp lệ. Đã hủy thao tác bán.';
                 return;
               }
-              status.textContent='Click lần 1: yêu cầu bán ID '+target.u+'. Đang chờ nút xác nhận lần 2…';
+              status.textContent='Đang gửi một lần bấm Bán cho ID '+target.u+'; chờ xác minh inventory…';
               sellButton.click();
-              var confirmButton=await waitFor(function(){
-                var el=document.querySelector('button[data-k="sell"][data-ok="1"]');
-                if(!el)return false;
-                var r=el.getBoundingClientRect(),cs=getComputedStyle(el);
-                return r.width>0&&r.height>0&&cs.display!=='none'&&cs.visibility!=='hidden'&&/bấm lần nữa để bán/i.test(el.textContent||'')?el:false;
-              },2500);
-              if(!confirmButton){
-                status.textContent='Không thấy trạng thái xác nhận lần 2. Đã dừng, không tự click tiếp.';
-                return;
-              }
-              // Ensure the exact same item is still present and unchanged before confirmation.
-              current=(window.S&&Array.isArray(window.S.inv))?window.S.inv.find(function(it){return String(it.u)===String(target.u)}):null;
-              if(!current||JSON.stringify(current)!==before){
-                status.textContent='Item đã thay đổi trước bước xác nhận. Đã hủy click lần 2.';
-                return;
-              }
-              status.textContent='Đã nhận diện “Bấm lần nữa để bán”. Click lần 2 để xác nhận ID '+target.u+'…';
-              confirmButton.click();
               var removed=await waitFor(function(){
                 return !(window.S&&Array.isArray(window.S.inv)&&window.S.inv.some(function(it){return String(it.u)===String(target.u)}));
               },4000);
               if(removed){
-                status.textContent='Đã xác minh ID '+target.u+' biến mất khỏi inventory sau xác nhận lần 2. Chưa tự bán món tiếp theo.';
+                status.textContent='Đã xác minh ID '+target.u+' biến mất khỏi inventory sau một lần bấm Bán. Chưa tự bán món tiếp theo.';
                 await scan();
               }else{
-                status.textContent='Đã click xác nhận lần 2 nhưng chưa xác minh được item biến mất. Dừng ngay; không thử lại.';
+                status.textContent='Chưa xác minh được ID '+target.u+' đã bán sau một lần bấm. Dừng ngay; không click lần hai hoặc thử lại.';
               }
             }catch(e){
               status.textContent='Lỗi khi bán thử: '+String(e)+' · Đã dừng.';
