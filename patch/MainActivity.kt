@@ -2,11 +2,14 @@ package net.hoainiem2003.muidle
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ClipboardManager
+import android.content.ClipData
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -15,6 +18,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.Toast
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
@@ -52,6 +56,7 @@ class MainActivity : Activity() {
             builtInZoomControls = false
             displayZoomControls = false
         }
+        webView.addJavascriptInterface(DiagnosticBridge(), "MUAndroid")
         webView.webChromeClient = WebChromeClient()
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
@@ -90,7 +95,7 @@ class MainActivity : Activity() {
 
           var root = document.createElement('div');
           root.id = 'mu-map-tools';
-          root.innerHTML = '<button class="gear" type="button" aria-label="Cài đặt Auto Move Map và Auto Filter">⚙</button><div class="panel"><div class="heading">AUTO MOVE MAP</div><div class="mapline"><span>Lv 1</span><span>-</span><input id="mu-map-limit" type="number" min="1" max="400" value="300"><select id="mu-map-y"><option value="">Chọn Map Y</option></select></div><div class="mapline"><span id="mu-map-level">Lv 301</span><span>-</span><span id="mu-map-reset" style="text-align:center;padding:8px;border:1px solid #80683f">Reset</span><select id="mu-map-z"><option value="">Chọn Map Z</option></select></div><button class="action" id="mu-map-toggle" type="button">AUTO MOVE MAP · ĐÃ TẮT</button><div class="status" id="mu-map-status">Đang chờ dữ liệu bản đồ trong game…</div><button class="action" id="mu-map-reload" type="button">TẢI LẠI MAP</button><div id="mu-auto-filter-slot"></div></div>';
+          root.innerHTML = '<button class="gear" type="button" aria-label="Cài đặt Auto Move Map và Auto Filter">⚙</button><div class="panel"><div class="heading">AUTO MOVE MAP</div><div class="mapline"><span>Lv 1</span><span>-</span><input id="mu-map-limit" type="number" min="1" max="400" value="300"><select id="mu-map-y"><option value="">Chọn Map Y</option></select></div><div class="mapline"><span id="mu-map-level">Lv 301</span><span>-</span><span id="mu-map-reset" style="text-align:center;padding:8px;border:1px solid #80683f">Reset</span><select id="mu-map-z"><option value="">Chọn Map Z</option></select></div><button class="action" id="mu-map-toggle" type="button">AUTO MOVE MAP · ĐÃ TẮT</button><div class="status" id="mu-map-status">Đang chờ dữ liệu bản đồ trong game…</div><button class="action" id="mu-map-reload" type="button">TẢI LẠI MAP</button><div class="af-section"><div class="heading">DIAGNOSTIC BÃI LUYỆN (TẠM THỜI)</div><div class="status" id="mu-diag-status">Nhấn BẮT ĐẦU, sau đó tự click Bãi luyện trong game. Cuối cùng nhấn COPY DIAGNOSTIC.</div><button class="action" id="mu-diag-start" type="button">BẮT ĐẦU GHI NHẬN</button><button class="action" id="mu-diag-copy" type="button">COPY DIAGNOSTIC JS</button></div><div id="mu-auto-filter-slot"></div></div>';
           document.documentElement.appendChild(root);
 
           var panel = root.querySelector('.panel');
@@ -169,6 +174,59 @@ class MainActivity : Activity() {
             if (!maps.some(function(m){return m.id===cfg.z;})) cfg.z = '';
             safeSave();
             status.textContent = 'Đã tải ' + maps.length + ' bản đồ. Chọn Map Y và Map Z.';
+          }
+          // Temporary runtime diagnostic: capture the user's real tap on "Bãi luyện".
+          var muDiag = {active:false,startedAt:null,events:[],before:null,after:null};
+          function muDiagNode(el) {
+            if (!el || el.nodeType !== 1) return null;
+            var r=el.getBoundingClientRect(), cs=getComputedStyle(el);
+            var out={tag:el.tagName,id:el.id||'',className:typeof el.className==='string'?el.className:'',text:(el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim().slice(0,180),html:(el.outerHTML||'').slice(0,1800),rect:{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)},display:cs.display,visibility:cs.visibility,cursor:cs.cursor,role:el.getAttribute('role'),onclickAttr:el.getAttribute('onclick')};
+            ['onclick','ontouchstart','onpointerdown'].forEach(function(k){try{out[k+'Type']=typeof el[k];}catch(e){}});
+            try { if (window.jQuery && window.jQuery._data) out.jqueryEvents=window.jQuery._data(el,'events')||null; } catch(e) {}
+            return out;
+          }
+          function muDiagSnapshot() {
+            var all=Array.prototype.slice.call(document.querySelectorAll('body *'));
+            var candidates=all.filter(function(el){return /bãi\\s*luyện/i.test((el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim()) && (el.innerText||el.textContent||'').trim().length<100;}).slice(0,12);
+            var globals=Object.keys(window).filter(function(k){return /map|train|move|bai|luyen|zone|teleport/i.test(k);}).slice(0,200);
+            var mapWin=document.getElementById('wMap'), mapBtn=document.getElementById('bMap');
+            return {time:new Date().toISOString(),url:location.href,title:document.title,readyState:document.readyState,viewport:{w:innerWidth,h:innerHeight,dpr:devicePixelRatio},trainingCandidates:candidates.map(function(el){var chain=[],n=el;for(var i=0;n&&i<5;i++,n=n.parentElement)chain.push(muDiagNode(n));return chain;}),mapWindow:muDiagNode(mapWin),mapButton:muDiagNode(mapBtn),mapRows:mapWin?Array.prototype.slice.call(mapWin.querySelectorAll('.zr[data-z]')).slice(0,100).map(function(el){return {id:el.getAttribute('data-z'),text:(el.innerText||el.textContent||'').trim(),className:el.className};}):[],globalNames:globals,scriptSources:Array.prototype.slice.call(document.scripts).map(function(s){return s.src||'[inline]';}).slice(0,80),jquery:!!window.jQuery};
+          }
+          function muDiagStart() {
+            muDiag={active:true,startedAt:new Date().toISOString(),events:[],before:muDiagSnapshot(),after:null};
+            document.addEventListener('click',muDiagClick,true);
+            document.addEventListener('pointerdown',muDiagPointer,true);
+            status.textContent='Đang ghi nhận. Bây giờ hãy tự click Bãi luyện trong game; chờ danh sách map mở xong rồi quay lại đây.';
+          }
+          function muDiagPointer(ev) {
+            if(!muDiag.active) return;
+            var path=ev.composedPath?ev.composedPath():[ev.target];
+            var item=path.find(function(x){return x&&x.nodeType===1&&/bãi\\s*luyện/i.test((x.innerText||x.textContent||'').replace(/\\s+/g,' ').trim()) && (x.innerText||x.textContent||'').trim().length<100;});
+            if(item) muDiag.events.push({type:'pointerdown',time:Date.now(),target:muDiagNode(ev.target),trainingNode:muDiagNode(item),path:path.slice(0,8).map(muDiagNode)});
+          }
+          function muDiagClick(ev) {
+            if(!muDiag.active) return;
+            var path=ev.composedPath?ev.composedPath():[ev.target];
+            var item=path.find(function(x){return x&&x.nodeType===1&&/bãi\\s*luyện/i.test((x.innerText||x.textContent||'').replace(/\\s+/g,' ').trim()) && (x.innerText||x.textContent||'').trim().length<100;});
+            if(item) {
+              muDiag.events.push({type:'click',time:Date.now(),defaultPrevented:ev.defaultPrevented,target:muDiagNode(ev.target),trainingNode:muDiagNode(item),path:path.slice(0,10).map(muDiagNode)});
+              setTimeout(function(){muDiag.after=muDiagSnapshot();status.textContent='Đã ghi nhận click Bãi luyện. Nhấn COPY DIAGNOSTIC JS để gửi dữ liệu.';},700);
+            }
+          }
+          function muDiagCopy() {
+            muDiag.active=false;
+            document.removeEventListener('click',muDiagClick,true);
+            document.removeEventListener('pointerdown',muDiagPointer,true);
+            muDiag.after=muDiag.after||muDiagSnapshot();
+            var payload={diagnostic:'MU IDLE training menu runtime capture v1',startedAt:muDiag.startedAt,finishedAt:new Date().toISOString(),before:muDiag.before,events:muDiag.events,after:muDiag.after};
+            var serialized=JSON.stringify(payload,null,2);
+            if(window.MUAndroid&&typeof window.MUAndroid.copyDiagnostic==='function') {
+              window.MUAndroid.copyDiagnostic(serialized);
+              status.textContent='Đã copy diagnostic. Hãy dán nguyên văn JS/JSON vào khung chat.';
+            } else {
+              var ta=document.createElement('textarea');ta.value=serialized;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+              try{document.execCommand('copy');status.textContent='Đã thử copy. Nếu clipboard trống, hãy chọn và copy nội dung trong ô.';}catch(e){status.textContent='Không copy tự động: '+String(e);}
+            }
           }
           function findTrainingMenuItem() {
             var all = Array.prototype.slice.call(document.querySelectorAll('body *'));
@@ -311,6 +369,8 @@ class MainActivity : Activity() {
           mapY.onchange = function() { cfg.y=mapY.value; safeSave(); failed=0; };
           mapZ.onchange = function() { cfg.z=mapZ.value; safeSave(); failed=0; };
           root.querySelector('#mu-map-reload').onclick = function(){ readMaps(true); };
+          root.querySelector('#mu-diag-start').onclick = muDiagStart;
+          root.querySelector('#mu-diag-copy').onclick = muDiagCopy;
           toggle.onclick = function() {
             if (!cfg.on && (!mapY.value || !mapZ.value)) {
               status.textContent='Hãy chờ tải map và chọn đủ Map Y, Map Z trước khi bật.';
@@ -623,6 +683,17 @@ class MainActivity : Activity() {
         })();
         """.trimIndent()
         webView.evaluateJavascript(js, null)
+    }
+
+    private inner class DiagnosticBridge {
+        @JavascriptInterface
+        fun copyDiagnostic(text: String) {
+            runOnUiThread {
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("MU IDLE Diagnostic", text))
+                Toast.makeText(this@MainActivity, "Đã copy diagnostic vào clipboard", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun loadHome() {
