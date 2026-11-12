@@ -84,13 +84,13 @@ class MainActivity : Activity() {
           if (!style) {
             style = document.createElement('style');
             style.id = 'mu-auto-tools-style';
-            style.textContent = '#mu-map-tools{position:fixed;z-index:2147483647;top:12px;left:12px;color:#f3dfb5;font:13px Arial,sans-serif;max-width:calc(100vw - 24px)}#mu-map-tools button,#mu-map-tools input,#mu-map-tools select{font:inherit;box-sizing:border-box}#mu-map-tools .gear{width:42px;height:42px;background:#21190f;color:#f3dfb5;border:1px solid #80683f;font-size:21px}#mu-map-tools .panel{display:none;margin-top:6px;padding:11px;background:#17130f;border:1px solid #80683f;width:min(480px,calc(100vw - 30px));max-height:82vh;overflow:auto;box-sizing:border-box;box-shadow:0 8px 28px #0009}#mu-map-tools .heading{font-weight:700;margin-bottom:10px}#mu-map-tools .mapline{display:grid;grid-template-columns:58px 12px 64px 28px minmax(100px,1fr);align-items:center;gap:5px;margin:8px 0}#mu-map-tools input,#mu-map-tools select{width:100%;min-width:0;padding:8px 5px;background:#302515;color:#f3dfb5;border:1px solid #80683f}#mu-map-tools .action{width:100%;padding:9px;margin-top:8px;background:#382c1b;color:#f3dfb5;border:1px solid #80683f}#mu-map-tools .on{background:#205b32!important;border-color:#4c9c61!important}#mu-map-tools .status{font-size:11px;line-height:1.45;color:#e8c979;margin-top:8px;white-space:normal}#mu-map-tools .af-section{border-top:1px solid #80683f;margin-top:13px;padding-top:11px}#mu-map-tools .af-title{font-weight:700;margin-bottom:9px;font-size:14px}#mu-map-tools .af-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}#mu-map-tools .af-field{min-width:0}#mu-map-tools .af-label{font-size:11px;color:#d7c49d;margin-bottom:4px}#mu-map-tools .af-rule{border:1px solid #80683f;background:#21190f;padding:8px;margin:8px 0}#mu-map-tools .af-rulehead{display:flex;align-items:center;justify-content:space-between;font-weight:700;margin-bottom:7px}#mu-map-tools .af-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}#mu-map-tools .af-tag{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;background:#302515;border:1px solid #b58b48;font-size:11px}#mu-map-tools .af-tag button{border:0;background:transparent;color:#ffd9c8;padding:0 2px;font-size:16px}#mu-map-tools .af-row{display:flex;gap:6px;align-items:center;margin-top:7px}#mu-map-tools .af-row>*{min-width:0;flex:1}#mu-map-tools .af-btn{padding:8px;background:#382c1b;color:#f3dfb5;border:1px solid #80683f}#mu-map-tools .af-danger{background:#65231b;border-color:#d87855}#mu-map-tools .af-muted{font-size:11px;color:#cdb98e;line-height:1.4}#mu-map-tools .af-check{display:inline-flex;align-items:center;gap:5px;margin:6px 9px 2px 0}#mu-map-tools .af-check input{width:17px;height:17px;accent-color:#1ebc79}#mu-map-tools .af-status{font-size:11px;color:#e8c979;line-height:1.4;margin:8px 0}#mu-map-tools .af-list{max-height:20vh;overflow:auto;font-size:11px}#mu-map-tools .af-item{padding:5px 0;border-top:1px solid #594329}';
+            style.textContent = '#mu-map-tools{position:fixed;z-index:2147483647;top:12px;left:12px;color:#f3dfb5;font:13px Arial,sans-serif;max-width:calc(100vw - 24px)}#mu-map-tools button,#mu-map-tools input,#mu-map-tools select{font:inherit;box-sizing:border-box}#mu-map-tools .gear{width:42px;height:42px;background:#21190f;color:#f3dfb5;border:1px solid #80683f;font-size:21px}#mu-map-tools .panel{display:none;margin-top:6px;padding:11px;background:#17130f;border:1px solid #80683f;width:min(480px,calc(100vw - 30px));max-height:82vh;overflow:auto;box-sizing:border-box;box-shadow:0 8px 28px #0009}#mu-map-tools .heading{font-weight:700;margin-bottom:10px}#mu-map-tools .mapline{display:grid;grid-template-columns:58px 12px 64px 28px minmax(100px,1fr);align-items:center;gap:5px;margin:8px 0}#mu-map-tools input,#mu-map-tools select{width:100%;min-width:0;padding:8px 5px;background:#302515;color:#f3dfb5;border:1px solid #80683f}#mu-map-tools .action{width:100%;padding:9px;margin-top:8px;background:#382c1b;color:#f3dfb5;border:1px solid #80683f}#mu-map-tools .on{background:#205b32!important;border-color:#4c9c61!important}#mu-map-tools .status{font-size:11px;line-height:1.45;color:#e8c979;margin-top:8px;white-space:normal}#mu-map-tools .af-section{border-top:1px solid #80683f;margin-top:13px;padding-top:11px}#mu-map-tools .af-title{font-weight:700;margin-bottom:9px;font-size:14px}#mu-map-tools .af-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}#mu-map-tools .af-field{min-width:0}#mu-map-tools .af-label{font-size:11px;color:#d7c49d;margin-bottom:4px}#mu-map-tools .af-rule{border:1px solid #80683f;background:#21190f;padding:8px;margin:8px 0}#mu-map-tools .af-rulehead{display:flex;align-items:center;justify-content:space-between;gap:6px;font-weight:700;margin-bottom:7px}#mu-map-tools .af-rulehead>span{flex:1;min-width:70px}#mu-map-tools .af-rulehead select{width:auto;max-width:42%;flex:1;font-size:10px;padding:6px 3px}#mu-map-tools .af-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}#mu-map-tools .af-tag{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;background:#302515;border:1px solid #b58b48;font-size:11px}#mu-map-tools .af-tag button{border:0;background:transparent;color:#ffd9c8;padding:0 2px;font-size:16px}#mu-map-tools .af-row{display:flex;gap:6px;align-items:center;margin-top:7px}#mu-map-tools .af-row>*{min-width:0;flex:1}#mu-map-tools .af-btn{padding:8px;background:#382c1b;color:#f3dfb5;border:1px solid #80683f}#mu-map-tools .af-danger{background:#65231b;border-color:#d87855}#mu-map-tools .af-muted{font-size:11px;color:#cdb98e;line-height:1.4}#mu-map-tools .af-check{display:inline-flex;align-items:center;gap:5px;margin:6px 9px 2px 0}#mu-map-tools .af-check input{width:17px;height:17px;accent-color:#1ebc79}#mu-map-tools .af-status{font-size:11px;color:#e8c979;line-height:1.4;margin:8px 0}#mu-map-tools .af-list{max-height:20vh;overflow:auto;font-size:11px}#mu-map-tools .af-item{padding:5px 0;border-top:1px solid #594329}';
             document.head.appendChild(style);
           }
 
           var root = document.createElement('div');
           root.id = 'mu-map-tools';
-          root.innerHTML = '<button class="gear" type="button" aria-label="Cài đặt Auto Move Map và Auto Filter">⚙</button><div class="panel"><div class="heading">AUTO MOVE MAP</div><div class="mapline"><span>Lv 1</span><span>-</span><input id="mu-map-limit" type="number" min="1" max="400" value="300"><span>tại</span><select id="mu-map-y"><option value="">Chọn Map Y</option></select></div><div class="mapline"><span id="mu-map-level">Lv 301+</span><span>-</span><span id="mu-map-reset" style="text-align:center;padding:8px;border:1px solid #80683f">Reset</span><span>tại</span><select id="mu-map-z"><option value="">Chọn Map Z</option></select></div><button class="action" id="mu-map-toggle" type="button">AUTO MOVE MAP · ĐÃ TẮT</button><div class="status" id="mu-map-status">Đang chờ dữ liệu bản đồ trong game…</div><div id="mu-auto-filter-slot"></div></div>';
+          root.innerHTML = '<button class="gear" type="button" aria-label="Cài đặt Auto Move Map và Auto Filter">⚙</button><div class="panel"><div class="heading">AUTO MOVE MAP</div><div class="mapline"><span>Lv 1</span><span>-</span><input id="mu-map-limit" type="number" min="1" max="400" value="300"><span>tại</span><select id="mu-map-y"><option value="">Chọn Map Y</option></select></div><div class="mapline"><span id="mu-map-level">Lv 301+</span><span>-</span><span id="mu-map-reset" style="text-align:center;padding:8px;border:1px solid #80683f">Reset</span><span>tại</span><select id="mu-map-z"><option value="">Chọn Map Z</option></select></div><button class="action" id="mu-map-toggle" type="button">AUTO MOVE MAP · ĐÃ TẮT</button><div class="status" id="mu-map-status">Đang chờ dữ liệu bản đồ trong game…</div><button class="action" id="mu-map-reload" type="button">TẢI LẠI MAP</button><div id="mu-auto-filter-slot"></div></div>';
           document.documentElement.appendChild(root);
 
           var panel = root.querySelector('.panel');
@@ -160,24 +160,36 @@ class MainActivity : Activity() {
             safeSave();
             status.textContent = 'Đã tải ' + maps.length + ' bản đồ. Chọn Map Y và Map Z.';
           }
-          function readMaps() {
-            if (readBusy || maps.length) return;
+          function readMaps(force) {
+            if (readBusy || (!force && maps.length)) return;
             var win = document.getElementById('wMap');
             var button = document.getElementById('bMap');
-            if (!win || !button) return;
+            if (!win || !button) {
+              status.textContent = 'Chưa tìm thấy bảng bản đồ trong game.';
+              return;
+            }
             readBusy = true;
             var openedByUs = !visible(win);
+            status.textContent = 'Đang mở danh sách bản đồ để tải dữ liệu…';
             if (openedByUs) button.click();
-            setTimeout(function() {
-              maps = rows().map(function(row) {
-                return {id:row.getAttribute('data-z'),name:(row.querySelector('b')||row).textContent.trim(),locked:row.classList.contains('lock')};
-              }).filter(function(m){return m.id!==null && m.id!=='';});
-              if (openedByUs && visible(win)) button.click();
-              readBusy = false;
-              readTries++;
-              if (maps.length) renderMaps();
-              else if (readTries >= 12) status.textContent = 'Chưa đọc được danh sách map. Hãy vào nhân vật trong game rồi mở lại bảng cài đặt.';
-            },500);
+            var started = Date.now();
+            (function poll() {
+              var found = rows();
+              if (found.length) {
+                maps = found.map(function(row) {
+                  return {id:row.getAttribute('data-z'),name:(row.querySelector('b')||row).textContent.trim(),locked:row.classList.contains('lock')};
+                }).filter(function(m){return m.id!==null && m.id!=='';});
+              }
+              if (maps.length || Date.now()-started >= 6000) {
+                if (openedByUs && visible(win)) button.click();
+                readBusy = false;
+                readTries++;
+                if (maps.length) renderMaps();
+                else status.textContent = 'Không tải được danh sách map. Hãy vào game đầy đủ rồi bấm TẢI LẠI MAP.';
+                return;
+              }
+              setTimeout(poll,150);
+            })();
           }
           function levelValue() {
             var n = Number(window.S && window.S.lv);
@@ -247,11 +259,12 @@ class MainActivity : Activity() {
           paint();
           root.querySelector('.gear').onclick = function() {
             panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-            if (panel.style.display === 'block') readMaps();
+            if (panel.style.display === 'block') readMaps(true);
           };
           limitInput.onchange = function() { safeSave(); paint(); failed=0; };
           mapY.onchange = function() { cfg.y=mapY.value; safeSave(); failed=0; };
           mapZ.onchange = function() { cfg.z=mapZ.value; safeSave(); failed=0; };
+          root.querySelector('#mu-map-reload').onclick = function(){ readMaps(true); };
           toggle.onclick = function() {
             if (!cfg.on && (!mapY.value || !mapZ.value)) {
               status.textContent='Hãy chờ tải map và chọn đủ Map Y, Map Z trước khi bật.';
@@ -261,7 +274,7 @@ class MainActivity : Activity() {
             if (cfg.on) { lastReset=resetValue(); failed=0; }
             safeSave(); paint(); tick();
           };
-          window.setInterval(function(){ if (!maps.length && readTries < 12) readMaps(); tick(); },1000);
+          window.setInterval(function(){ tick(); },1000);
           readMaps();
         })();
         """.trimIndent()
@@ -291,7 +304,7 @@ class MainActivity : Activity() {
             {id:5,name:'Giảm sát thương 4%',kind:'d'},
             {id:11,name:'Phản 5% sát thương',kind:'d'}
           ];
-          var common = {type:'w',class:'all',option:0,upgrade:0,luck:false,bonus:false,bonusMin:0};
+          var common = {option:0,upgrade:0,luck:false,bonus:false,bonusMin:0};
           var rules = [{excellent:[]}];
           var active = false, busy = false, lastRows = [], status, list;
           var $ = function(q){return slot.querySelector(q);};
@@ -339,26 +352,30 @@ class MainActivity : Activity() {
             if (eq[String(it.u)]) return false;
             return true;
           }
-          function ruleMatch(it,rule) {
+          function ruleScopeMatch(it,base,rule) {
+            return !!base && groupType(it.g)===rule.type && classAllowed(base,rule.class);
+          }
+          function ruleMatch(it,rule,base) {
+            if (!ruleScopeMatch(it,base,rule)) return false;
             var selected=Array.isArray(rule.excellent)?rule.excellent:[];
             if (!selected.length || !Array.isArray(it.ex)) return false;
             var codes=it.ex.map(Number);
             return selected.every(function(c){return codes.indexOf(Number(c))>=0;});
           }
-          function matchesKeep(it) { return rules.some(function(r){return ruleMatch(it,r);}); }
+          function matchesKeep(it,base) { return rules.some(function(r){return ruleMatch(it,r,base);}); }
           function scan() {
             var st=state();
             if (!st) return null;
             var eq=equippedIds(st.s);
             return st.items.map(function(it) {
               var base=baseOf(it,st.db), equipped=!!eq[String(it.u)];
-              var inScope=!!base && !!groupType(it.g) && groupType(it.g)===common.type &&
-                classAllowed(base,common.class) &&
+              var inScope=!!base && !!groupType(it.g) &&
+                rules.some(function(rule){return ruleScopeMatch(it,base,rule);}) &&
                 Number(it.o||0)>=Number(common.option||0) &&
                 Number(it.l||0)>=Number(common.upgrade||0) &&
                 (!common.luck || it.lk===true || Number(it.lk)>0) &&
                 (!common.bonus || Number(it.bonus||it.lvBonus||0)>=Number(common.bonusMin||0));
-              var keep = equipped || !base || !inScope || rules.length===0 || matchesKeep(it);
+              var keep = equipped || !base || !inScope || matchesKeep(it,base);
               return {raw:it,id:String(it.u),name:itemName(it,st.db),known:!!base,equipped:equipped,inScope:inScope,keep:keep,candidate:!keep};
             });
           }
@@ -376,10 +393,11 @@ class MainActivity : Activity() {
             try {
               var r=JSON.parse(localStorage.getItem('muAutoFilterCleanRules')||'null');
               if (!Array.isArray(r)) r=JSON.parse(localStorage.getItem('muAutoFilterProRules')||'null');
-              if (Array.isArray(r) && r.length) rules=r.map(function(x){return {excellent:Array.isArray(x.excellent)?x.excellent.map(Number).filter(function(n){return exCatalog.some(function(e){return e.id===n;});}).slice(0,6):[]};});
+              if (Array.isArray(r) && r.length) rules=r.map(function(x){return {type:x.type||'w',class:x.class||'all',excellent:Array.isArray(x.excellent)?x.excellent.map(Number).filter(function(n){return exCatalog.some(function(e){return e.id===n;});}).slice(0,6):[]};});
               var c=JSON.parse(localStorage.getItem('muAutoFilterCleanCommon')||'null');
               if (!c) c=JSON.parse(localStorage.getItem('muAutoFilterProCommon')||'null');
               if (c && typeof c==='object') common=Object.assign(common,c);
+              rules.forEach(function(rule){if(!rule.type)rule.type=common.type||'w';if(!rule.class)rule.class=common.class||'all';});
               active=localStorage.getItem('muAutoFilterCleanActive')==='1' || localStorage.getItem('muAutoFilterProActive')==='1';
               if (!rules.some(function(rule){return rule.excellent.length>0;})) active=false;
             } catch(e) { rules=[{excellent:[]}]; active=false; }
@@ -392,12 +410,12 @@ class MainActivity : Activity() {
               }).join('');
               var options=exCatalog.filter(function(x){return !(rule.excellent||[]).includes(x.id);})
                 .map(function(x){return '<option value="'+x.id+'">'+esc(x.name)+'</option>';}).join('');
-              return '<div class="af-rule"><div class="af-rulehead"><span>Rule '+(i+1)+' · '+(rule.excellent.length)+'/6 EX</span><button class="af-btn af-danger" type="button" data-delete="'+i+'">Xóa</button></div><div class="af-tags">'+(tags||'<span class="af-muted">Chưa chọn EX Option</span>')+'</div><div class="af-row"><select data-select="'+i+'"><option value="">Chọn EX Option</option>'+options+'</select><button class="af-btn" type="button" data-add="'+i+'">＋ Thêm</button></div></div>';
+              var typeOptions=[['w','Weapon · Vũ khí'],['s','Shield · Khiên'],['h','Headgear · Helm + Circlet'],['a','Armor · Giáp'],['p','Pants · Quần'],['g','Gloves · Găng'],['b','Boots · Giày']].map(function(x){return '<option value="'+x[0]+'" '+(rule.type===x[0]?'selected':'')+'>'+x[1]+'</option>';}).join('');
+              var classOptions=[['all','Tất cả class'],['dw','Dark Wizard'],['dk','Dark Knight'],['el','Fairy Elf'],['mg','Magic Gladiator'],['dl','Dark Lord']].map(function(x){return '<option value="'+x[0]+'" '+(rule.class===x[0]?'selected':'')+'>'+x[1]+'</option>';}).join('');
+              return '<div class="af-rule"><div class="af-rulehead"><span>Rule '+(i+1)+' · '+(rule.excellent.length)+'/6 EX</span><button class="af-btn af-danger" type="button" data-delete="'+i+'">Xóa</button></div><div class="af-row"><select data-rule-type="'+i+'">'+typeOptions+'</select><select data-rule-class="'+i+'">'+classOptions+'</select></div><div class="af-tags">'+(tags||'<span class="af-muted">Chưa chọn EX Option</span>')+'</div><div class="af-row"><select data-select="'+i+'"><option value="">Chọn EX Option</option>'+options+'</select><button class="af-btn" type="button" data-add="'+i+'">＋ Thêm</button></div></div>';
             }).join('');
           }
           function fill() {
-            $('#af-type').value=common.type;
-            $('#af-class').value=common.class;
             $('#af-option').value=String(common.option);
             $('#af-upgrade').value=String(common.upgrade);
             $('#af-luck').checked=!!common.luck;
@@ -407,8 +425,6 @@ class MainActivity : Activity() {
             paintToggle();
           }
           function readForm() {
-            common.type=$('#af-type').value;
-            common.class=$('#af-class').value;
             common.option=Number($('#af-option').value);
             common.upgrade=Number($('#af-upgrade').value);
             common.luck=$('#af-luck').checked;
@@ -501,19 +517,22 @@ class MainActivity : Activity() {
             if (rows.some(function(x){return x.candidate;})) sellOne();
           }
 
-          slot.innerHTML='<div class="af-section"><div class="af-title">AUTO FILTER</div><div class="af-grid"><div class="af-field"><div class="af-label">Loại trang bị</div><select id="af-type"><option value="w">Weapon · Vũ khí</option><option value="s">Shield · Khiên</option><option value="h">Headgear · Helm + Circlet</option><option value="a">Armor · Giáp</option><option value="p">Pants · Quần</option><option value="g">Gloves · Găng</option><option value="b">Boots · Giày</option></select></div><div class="af-field"><div class="af-label">Class sử dụng</div><select id="af-class"><option value="all">Tất cả class</option><option value="dw">Dark Wizard</option><option value="dk">Dark Knight</option><option value="el">Fairy Elf</option><option value="mg">Magic Gladiator</option><option value="dl">Dark Lord</option></select></div><div class="af-field"><div class="af-label">Option tối thiểu</div><select id="af-option"><option value="0">Không xét</option><option value="1">+1 trở lên</option><option value="2">+2 trở lên</option><option value="3">+3 trở lên</option><option value="4">+4 trở lên</option></select></div><div class="af-field"><div class="af-label">Upgrade tối thiểu</div><select id="af-upgrade"><option value="0">Không xét</option><option value="3">+3 trở lên</option><option value="4">+4 trở lên</option><option value="5">+5 trở lên</option><option value="6">+6 trở lên</option><option value="7">+7 trở lên</option><option value="9">+9 trở lên</option><option value="10">+10 trở lên</option></select></div></div><label class="af-check"><input id="af-luck" type="checkbox">Luck</label><label class="af-check"><input id="af-bonus" type="checkbox">Bonus cấp</label><select id="af-bonus-min" style="width:95px"><option value="0">Bonus bất kỳ</option><option value="1">+1 trở lên</option><option value="2">+2 trở lên</option><option value="3">+3 trở lên</option></select><div class="af-rule"><div class="af-rulehead"><span>Danh sách Rule</span><button class="af-btn" id="af-add-rule" type="button">＋ Thêm Rule</button></div><div class="af-muted">Trong cùng Rule: AND (tất cả EX phải có). Giữa các Rule: OR (đạt một Rule là giữ). Tối đa 6 EX mỗi Rule.</div><div id="af-rules"></div></div><div class="af-row"><button class="af-btn" id="af-preview" type="button">CHẠY THỬ</button><button class="af-btn" id="af-toggle" type="button">AUTO FILTER · ĐÃ TẮT</button></div><div class="af-status" id="af-status">Chưa quét inventory.</div><div class="af-list" id="af-list"></div></div>';
+          slot.innerHTML='<div class="af-section"><div class="af-title">AUTO FILTER</div><div class="af-grid"><div class="af-field"><div class="af-label">Option tối thiểu</div><select id="af-option"><option value="0">Không xét</option><option value="1">+1 trở lên</option><option value="2">+2 trở lên</option><option value="3">+3 trở lên</option><option value="4">+4 trở lên</option></select></div><div class="af-field"><div class="af-label">Upgrade tối thiểu</div><select id="af-upgrade"><option value="0">Không xét</option><option value="3">+3 trở lên</option><option value="4">+4 trở lên</option><option value="5">+5 trở lên</option><option value="6">+6 trở lên</option><option value="7">+7 trở lên</option><option value="9">+9 trở lên</option><option value="10">+10 trở lên</option></select></div></div><label class="af-check"><input id="af-luck" type="checkbox">Luck</label><label class="af-check"><input id="af-bonus" type="checkbox">Bonus cấp</label><select id="af-bonus-min" style="width:95px"><option value="0">Bonus bất kỳ</option><option value="1">+1 trở lên</option><option value="2">+2 trở lên</option><option value="3">+3 trở lên</option></select><div class="af-rule"><div class="af-rulehead"><span>Danh sách Rule</span><button class="af-btn" id="af-add-rule" type="button">＋ Thêm Rule</button></div><div class="af-muted">Trong cùng Rule: AND (tất cả EX phải có). Giữa các Rule: OR (đạt một Rule là giữ). Tối đa 6 EX mỗi Rule.</div><div id="af-rules"></div></div><div class="af-row"><button class="af-btn" id="af-preview" type="button">CHẠY THỬ</button><button class="af-btn" id="af-toggle" type="button">AUTO FILTER · ĐÃ TẮT</button></div><div class="af-status" id="af-status">Chưa quét inventory.</div><div class="af-list" id="af-list"></div></div>';
           status=$('#af-status'); list=$('#af-list');
           load(); fill();
-          ['af-type','af-class','af-option','af-upgrade','af-luck','af-bonus','af-bonus-min'].forEach(function(id) {
+          ['af-option','af-upgrade','af-luck','af-bonus','af-bonus-min'].forEach(function(id) {
             $('#'+id).onchange=readForm;
           });
           $('#af-add-rule').onclick=function() {
             readForm();
-            rules.push({excellent:[]});
+            rules.push({type:'w',class:'all',excellent:[]});
             renderRules(); save();
           };
           $('#af-rules').addEventListener('click',function(ev) {
             var add=ev.target.closest('[data-add]'), remove=ev.target.closest('[data-remove]'), del=ev.target.closest('[data-delete]');
+            var ruleType=ev.target.closest('[data-rule-type]'), ruleClass=ev.target.closest('[data-rule-class]');
+            if (ruleType) { var ti=Number(ruleType.getAttribute('data-rule-type')); if(rules[ti]){rules[ti].type=ruleType.value;save();} return; }
+            if (ruleClass) { var ci=Number(ruleClass.getAttribute('data-rule-class')); if(rules[ci]){rules[ci].class=ruleClass.value;save();} return; }
             if (add) {
               var i=Number(add.getAttribute('data-add')), select=$('#af-rules').querySelector('[data-select="'+i+'"]');
               if (!select || !select.value) return;
@@ -529,7 +548,7 @@ class MainActivity : Activity() {
             }
             if (del) {
               var di=Number(del.getAttribute('data-delete'));
-              if (rules.length===1) rules[0]={excellent:[]}; else rules.splice(di,1);
+              if (rules.length===1) rules[0]={type:'w',class:'all',excellent:[]}; else rules.splice(di,1);
               renderRules(); save();
             }
           });
