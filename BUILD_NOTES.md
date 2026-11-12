@@ -34,3 +34,18 @@ The Android WebView shell and original game page remain unchanged. The separate 
 ## Validation
 
 The GitHub Actions build validates the injected JavaScript syntax with Node before compiling the Android APK. A successful Android build confirms compilation only. Live in-game testing is still required to verify game DOM selectors, map transition timing, inventory item identity, and the sell confirmation flow.
+
+
+## Approved UI design standard (2026-11-12)
+
+Use this visual and interaction pattern as the default for future MU IDLE Manager features unless the user explicitly approves a different design:
+- Preserve the existing dark brown / antique-gold theme, compact spacing, readable labels, and mobile-first layout.
+- Settings features belong in the shared Settings panel; do not create separate floating launchers unless explicitly requested.
+- Auto Move Map uses exactly two compact rows:
+  - `Lv 1 - [threshold X input] [Map Y selector]`
+  - `Lv [X+1] - [reset-required level read live from game] [Map Z selector]`
+  - The reset-required level is system/game-derived and read dynamically; never ask the user to enter it or invent a formula.
+  - When Settings opens, open the game's map list, wait until its rows are actually available, read them, then close the map list. Show success only after data is read; provide a reload control for failure/retry.
+- Auto Filter keeps Class and Equipment Type selectors independently inside every Rule, directly below that Rule's heading. Each Rule's EX options remain within the same card.
+- Auto Filter semantics: AND within a Rule, OR between Rules, max 6 EX options per Rule. Keep common Option / Upgrade / Luck / Bonus filters separate from per-Rule Class and Equipment Type.
+- Keep these approved layouts as the reference pattern for subsequent feature development. Do not alter existing automation logic or add unrequested behavior while implementing visual changes.
