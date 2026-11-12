@@ -171,7 +171,7 @@ public class MainActivity extends Activity {
             " document.addEventListener('visibilitychange', function(){ if (!document.hidden && navigator.onLine) heartbeat(); });" +
             " setInterval(heartbeat, intervalMs);" +
             " setTimeout(heartbeat, 10000);" +
-            " window.__muReconnectNow = function(){ failures = 2; recover('native-network-restored'); };" +
+            " window.__muReconnectNow = function(){ if (navigator.onLine) heartbeat(); };" +
             "})();";
         webView.evaluateJavascript(script, null);
     }
