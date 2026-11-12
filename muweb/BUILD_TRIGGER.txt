@@ -1,1 +1,0 @@
-Trigger Android APK build for MU Web. Heartbeat reconnect implementation finalized.
