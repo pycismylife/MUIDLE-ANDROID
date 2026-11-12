@@ -1,34 +1,36 @@
-# MU IDLE APK – Build Notes
+# MU IDLE APK – Clean module rebuild
 
-## Clean rebuild scope
+## Scope
 
-This rebuild intentionally removes the previously added custom tools and starts with one feature only: Auto Move Map.
+This branch rewrites only the two custom modules in `patch/MainActivity.kt`:
+- Auto Move Map
+- Auto Filter
 
-The Android WebView shell and the original game page are retained. The following older custom features are excluded from this build: Auto Filter, Auto Stats, Auto Reset, Drop Table, monster hiding, minimap hiding, FPS limiter, offline speed controls, and other diagnostic/graphics controls.
+The Android WebView shell and original game page remain unchanged. The separate Diagnostic module and its obsolete imports are removed. No unrelated game behavior, FPS controls, or graphics settings are added or modified.
 
-## Auto Move Map – first implementation
+## Auto Move Map
 
-- Configure a level threshold (1–400), Map Y, and Map Z.
-- Farm Map Y from Lv 1 through the configured threshold.
-- Switch to Map Z when the character level exceeds the threshold.
-- When the Reset counter increases, return to Map Y.
-- Check level and Reset state once per second.
-- Use the game's own map list and map row click path; do not invent map IDs or send a custom server request.
-- Read map IDs, names, and lock state from the live map list.
+- Level 1 through configured threshold X: Map Y.
+- Level above X: Map Z.
+- When Reset increases: return to Map Y.
+- Poll game level and Reset state once per second.
+- Read map IDs, names, and lock state from the live game map list.
 - Refuse to click a map marked locked.
-- Save the map choices, threshold, and enabled state locally on the device.
-- Do not add in-map movement or monster/spot controls; the game handles combat and movement within the selected map.
-- Status text reports data-read failures, locked maps, and whether the selected map is confirmed as current by the game's map-list UI.
+- Confirm the selected map from the game's current-map row; avoid repeated clicks.
+- Save threshold, map choices, and enabled state locally on the device.
+
+## Auto Filter
+
+- Integrated directly below Auto Move Map in the same Settings panel; no separate floating launcher.
+- Shared scope: equipment type, class, minimum Option, minimum Upgrade, Luck, and Bonus.
+- Supported equipment groups: Weapon, Shield, Headgear (Helm + Circlet), Armor, Pants, Gloves, Boots.
+- Each Rule contains 1–6 EX options combined with AND; multiple Rules are combined with OR.
+- An item matching at least one Rule is kept. An in-scope item matching no Rule is a sell candidate.
+- Equipped items and unrecognized items are always kept.
+- Auto selling handles one item at a time and revalidates its inventory ID and equipped state before the game's two-step sell confirmation.
+- Rules, shared filters, and enabled state are saved locally.
+- An empty Rule set cannot enable automatic selling.
 
 ## Validation
 
-A successful Android build confirms compilation only. Live in-game testing is still required to verify the actual map list selectors, map transition timing, level threshold behavior, and Reset return behavior.
-
-
-## Inventory Diagnostic APK
-
-- Adds an on-screen read-only diagnostic panel, separate from Auto Move Map.
-- Scan visible inventory/modal DOM elements and buttons; capture one user-selected item click and inspect an open item-detail popup.
-- Copy a JSON report to Android clipboard for sharing in ChatGPT.
-- No sell, equip, move, or inventory mutation actions are implemented in Diagnostic mode.
-- A successful build confirms compilation only; actual DOM evidence must be collected from the live game.
+The GitHub Actions build validates the injected JavaScript syntax with Node before compiling the Android APK. A successful Android build confirms compilation only. Live in-game testing is still required to verify game DOM selectors, map transition timing, inventory item identity, and the sell confirmation flow.
