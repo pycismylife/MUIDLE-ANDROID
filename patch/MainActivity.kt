@@ -110,9 +110,12 @@ class MainActivity : Activity() {
           var readTries = 0;
 
           function visible(el) {
-            if (!el) return false;
+            if (!el || el.hidden || el.getAttribute('aria-hidden') === 'true') return false;
             var r = el.getBoundingClientRect(), s = getComputedStyle(el);
-            return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden';
+            var opacity = Number(s.opacity);
+            return r.width > 0 && r.height > 0 &&
+              s.display !== 'none' && s.visibility !== 'hidden' &&
+              (!Number.isFinite(opacity) || opacity > 0.01);
           }
           function rows() { return Array.prototype.slice.call(document.querySelectorAll('#wMap .zr[data-z]')); }
           function currentMap() {
