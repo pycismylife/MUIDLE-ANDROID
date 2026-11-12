@@ -99,6 +99,15 @@ public class MainActivity extends Activity {
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (url != null && (url.startsWith("https://hoainiem2003.net/")
+                    || url.startsWith("https://www.hoainiem2003.net/"))) {
+                    installConnectionRecovery();
+                }
+            }
+
+            @Override
             public boolean shouldOverrideUrlLoading(
                 WebView view,
                 WebResourceRequest request
@@ -122,6 +131,62 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
+    }
+
+    private void installConnectionRecovery() {
+        String script =
+            "(function() {" +
+            " if (window.__muConnectionRecoveryInstalled) return;" +
+            " window.__muConnectionRecoveryInstalled = true;" +
+            " var failures = 0, checking = false, recovering = false, lastCheck = 0;" +
+            " var intervalMs = 45000, timeoutMs = 12000;" +
+            " function recover(reason) {" +
+            "   if (recovering || !navigator.onLine) return;" +
+            "   recovering = true;" +
+            "   setTimeout(function() {" +
+            "     if (navigator.onLine) {" +
+            "       try { window.location.reload(); } catch(e) {}" +
+            "     } else { recovering = false; }" +
+            "   }, 1500);" +
+            " }" +
+            " async function heartbeat() {" +
+            "   if (checking || recovering || !navigator.onLine) return;" +
+            "   checking = true; lastCheck = Date.now();" +
+            "   var controller = new AbortController();" +
+            "   var timer = setTimeout(function(){ controller.abort(); }, timeoutMs);" +
+            "   try {" +
+            "     var response = await fetch('" + HOME + "', {" +
+            "       method:'GET', cache:'no-store', credentials:'include'," +
+            "       headers:{'Range':'bytes=0-0'}, signal:controller.signal" +
+            "     });" +
+            "     if (response.ok || response.status === 206 || response.status === 304) {" +
+            "       failures = 0; recovering = false;" +
+            "     } else { failures++; }" +
+            "   } catch(e) { failures++; }" +
+            "   finally { clearTimeout(timer); checking = false; }" +
+            "   if (failures >= 2) recover('heartbeat-failed');" +
+            " }" +
+            " window.addEventListener('online', function(){ failures = 0; recover('network-restored'); });" +
+            " window.addEventListener('pageshow', function(){ if (navigator.onLine && Date.now()-lastCheck > intervalMs) heartbeat(); });" +
+            " document.addEventListener('visibilitychange', function(){ if (!document.hidden && navigator.onLine) heartbeat(); });" +
+            " setInterval(heartbeat, intervalMs);" +
+            " setTimeout(heartbeat, 10000);" +
+            " window.__muReconnectNow = function(){ failures = 2; recover('native-network-restored'); };" +
+            "})();";
+        webView.evaluateJavascript(script, null);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (webView != null) {
+            webView.onResume();
+            webView.resumeTimers();
+            webView.evaluateJavascript(
+                "if(window.__muReconnectNow && navigator.onLine) window.__muReconnectNow();",
+                null
+            );
+        }
     }
 
     @Override
