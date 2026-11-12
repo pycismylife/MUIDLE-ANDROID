@@ -170,10 +170,36 @@ class MainActivity : Activity() {
             safeSave();
             status.textContent = 'Đã tải ' + maps.length + ' bản đồ. Chọn Map Y và Map Z.';
           }
+          function findTrainingMenuItem() {
+            var all = Array.prototype.slice.call(document.querySelectorAll('body *'));
+            var matches = all.filter(function(el) {
+              if (!visible(el)) return false;
+              var t = (el.innerText || el.textContent || '').replace(/\\s+/g,' ').trim();
+              return t === 'Bãi luyện' || t === 'Bãi Luyện';
+            }).sort(function(a,b) {
+              return (a.innerText || a.textContent || '').length - (b.innerText || b.textContent || '').length;
+            });
+            if (!matches.length) return null;
+            var node = matches[0];
+            for (var i=0; node && i<5; i++,node=node.parentElement) {
+              if (!visible(node)) continue;
+              var tag = (node.tagName || '').toLowerCase();
+              var role = node.getAttribute && node.getAttribute('role');
+              var style = getComputedStyle(node);
+              if (tag === 'button' || tag === 'a' || role === 'button' ||
+                  typeof node.onclick === 'function' || style.cursor === 'pointer') return node;
+            }
+            return matches[0];
+          }
+          function clickTrainingMenu() {
+            var item = findTrainingMenuItem();
+            if (!item) return false;
+            item.click();
+            return true;
+          }
           function readMaps(force) {
             if (readBusy || (!force && maps.length)) return;
             var win = document.getElementById('wMap');
-            var button = document.getElementById('bMap');
             if (!win) {
               status.textContent = 'Chưa tìm thấy khung danh sách bản đồ trong game.';
               return;
@@ -182,30 +208,12 @@ class MainActivity : Activity() {
             var openedByUs = !visible(win);
             var started = Date.now();
             var openRequested = false;
-            var openMethod = '';
-            status.textContent = 'Đang mở bảng Di chuyển (M)…';
-            function sendMapShortcut() {
-              // The game's map window is bound to the M shortcut (title: "Di chuyển (M)").
-              // Dispatch on body so bubbling reaches document/window keyboard handlers.
-              var target = document.body || document;
-              var down = new KeyboardEvent('keydown', {
-                key:'m', code:'KeyM', keyCode:77, which:77, bubbles:true, cancelable:true
-              });
-              var up = new KeyboardEvent('keyup', {
-                key:'m', code:'KeyM', keyCode:77, which:77, bubbles:true, cancelable:true
-              });
-              target.dispatchEvent(down);
-              target.dispatchEvent(up);
-            }
+            status.textContent = 'Đang tự mở Bãi luyện để tải danh sách map…';
             function requestOpen() {
               if (openRequested || visible(win)) return;
               openRequested = true;
-              if (button && typeof button.click === 'function') {
-                button.click();
-                openMethod = 'button';
-              } else {
-                sendMapShortcut();
-                openMethod = 'shortcut';
+              if (!clickTrainingMenu()) {
+                status.textContent = 'Chưa tìm thấy mục Bãi luyện trên thanh menu.';
               }
             }
             requestOpen();
@@ -219,14 +227,11 @@ class MainActivity : Activity() {
                 if (fresh.length) maps = fresh;
               }
               if ((isOpen && maps.length) || Date.now()-started >= 10000) {
-                if (openedByUs && visible(win)) {
-                  if (button && typeof button.click === 'function') button.click();
-                  else sendMapShortcut();
-                }
+                if (openedByUs && visible(win)) clickTrainingMenu();
                 readBusy = false;
                 readTries++;
                 if (isOpen && maps.length) renderMaps();
-                else status.textContent = 'Không mở được bảng Di chuyển (M) để đọc map. Đã thử: ' + (openMethod || 'phím M') + '.';
+                else status.textContent = 'Không tải được danh sách map từ Bãi luyện. Hãy thử TẢI LẠI MAP khi game đã vào đầy đủ.';
                 return;
               }
               setTimeout(poll,180);
