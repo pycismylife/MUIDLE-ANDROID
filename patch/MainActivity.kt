@@ -438,7 +438,31 @@ class MainActivity : Activity() {
     private fun installInventoryInspector() {
         val js = """
         (function(){
-          var old=document.getElementById('mu-inv-inspector');if(window.__muAutoFilterProInstalled&&old)return;if(old)old.remove();
+          function attachFilterLauncher(){
+            var settingsPanel=document.querySelector('#mu-map-tools .panel');
+            if(!settingsPanel)return false;
+            var launch=settingsPanel.querySelector('#mu-open-filter');
+            if(!launch){
+              launch=document.createElement('button');launch.id='mu-open-filter';launch.className='action';launch.type='button';launch.textContent='🎒 AUTO FILTER PRO · INV';
+              settingsPanel.appendChild(launch);
+            }
+            launch.onclick=function(){
+              var filterPanel=document.querySelector('#mu-inv-inspector .panel');
+              if(!filterPanel)return;
+              filterPanel.style.display=(getComputedStyle(filterPanel).display==='none')?'block':'none';
+            };
+            return true;
+          }
+          var old=document.getElementById('mu-inv-inspector');
+          if(window.__muAutoFilterProInstalled&&old){
+            attachFilterLauncher();
+            if(!window.__muFilterLauncherObserver){
+              window.__muFilterLauncherObserver=new MutationObserver(function(){attachFilterLauncher()});
+              window.__muFilterLauncherObserver.observe(document.documentElement,{childList:true,subtree:true});
+            }
+            return;
+          }
+          if(old)old.remove();
           window.__muAutoFilterProInstalled=true;
           var css=document.createElement('style');
           css.textContent='#mu-inv-inspector{position:fixed;z-index:2147483646;left:10px;bottom:12px;color:#f3e5c2;font:14px Arial,sans-serif}#mu-inv-inspector *{box-sizing:border-box}#mu-inv-inspector .gear{width:44px;height:44px;background:#21180e;color:#f4dfb2;border:1px solid #b18a48;font-weight:bold}#mu-inv-inspector .panel{display:none;width:min(480px,calc(100vw - 20px));max-height:82vh;overflow:auto;background:linear-gradient(145deg,#1b140c,#100d09);border:1px solid #d0a653;padding:12px;box-shadow:0 5px 24px #000d}#mu-inv-inspector .brand{font-size:18px;font-weight:900;letter-spacing:.4px;margin:0 0 12px;color:#f7e8c6}#mu-inv-inspector .row{display:flex;align-items:center;gap:7px;margin:7px 0;flex-wrap:wrap}#mu-inv-inspector .row>label{font-weight:bold}#mu-inv-inspector select,#mu-inv-inspector input[type=number]{min-width:0;background:#302313;color:#f7e7c4;border:1px solid #c49a50;padding:8px;font:inherit}#mu-inv-inspector select{flex:1}#mu-inv-inspector button{font:inherit;color:#f7e7c4;background:#382916;border:1px solid #b58b48;padding:8px}#mu-inv-inspector button:disabled{opacity:.5}#mu-inv-inspector .iconbtn{min-width:38px;font-size:20px}#mu-inv-inspector .section{border:1px solid #9e793f;margin-top:9px;padding:8px}#mu-inv-inspector .sectionhead{font-weight:bold;margin-bottom:6px}#mu-inv-inspector label.check{display:inline-flex;align-items:center;gap:6px;margin:5px 9px 5px 0}#mu-inv-inspector input[type=checkbox]{width:19px;height:19px;accent-color:#1ebc79}#mu-inv-inspector .exgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px}#mu-inv-inspector .exgrid label{margin:3px 0}#mu-inv-inspector .status{color:#e8c979;margin:9px 0;font-size:12px;line-height:1.4}#mu-inv-inspector .green{background:linear-gradient(90deg,#075a37,#0d7a46);border:2px solid #55d69a;text-align:center;font-weight:bold;width:100%;padding:13px}#mu-inv-inspector .red{background:#65231b;border-color:#d87855}#mu-inv-inspector .list{font-size:12px;max-height:23vh;overflow:auto;line-height:1.4}#mu-inv-inspector .item{padding:6px 0;border-top:1px solid #594329}#mu-inv-inspector .candidate{color:#ffc56b}#mu-inv-inspector .keep{color:#9bd6a5}#mu-inv-inspector .muted{font-size:11px;color:#cdb98e}#mu-inv-inspector .advanced{display:none}#mu-inv-inspector .simplegrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}#mu-inv-inspector .simplegrid select{width:100%}#mu-inv-inspector .primary{width:100%;padding:12px;font-weight:bold}#mu-inv-inspector .mini{font-size:12px;padding:6px}';
@@ -447,13 +471,12 @@ class MainActivity : Activity() {
           root.innerHTML='<button class="gear">AF</button><div class="panel"><div class="brand">AUTO FILTER PRO</div><div class="simplegrid"><div><div class="muted">Loại đồ</div><select id="af-type"><option value="w">Vũ khí</option><option value="s">Khiên</option><option value="h">Mũ</option><option value="a">Giáp</option><option value="p">Quần</option><option value="g">Găng</option><option value="b">Giày</option></select></div><div><div class="muted">Class sử dụng</div><select id="af-class"><option value="all">Tất cả class</option><option value="dw">Dark Wizard</option><option value="dk">Dark Knight</option><option value="el">Fairy Elf</option><option value="mg">Magic Gladiator</option><option value="dl">Dark Lord</option></select></div></div><div class="section"><div class="sectionhead">Điều kiện lọc</div><div class="simplegrid"><div><div class="muted">Option tối thiểu</div><select id="af-option"><option value="0">Không xét</option><option value="1">+1 trở lên</option><option value="2">+2 trở lên</option><option value="3">+3 trở lên</option><option value="4">+4 trở lên</option></select></div><div><div class="muted">Upgrade tối thiểu</div><select id="af-upgrade"><option value="0">Không xét</option><option value="3">+3 trở lên</option><option value="4">+4 trở lên</option><option value="5">+5 trở lên</option><option value="6">+6 trở lên</option><option value="7">+7 trở lên</option><option value="9">+9 trở lên</option><option value="10">+10 trở lên</option></select></div></div><label class="check"><input id="af-luck" type="checkbox">Luck (May mắn)</label><label class="check"><input id="af-bonus" type="checkbox">Bonus cấp</label><select id="af-bonus-min"><option value="0">Bonus bất kỳ</option><option value="1">+1 trở lên</option><option value="2">+2 trở lên</option><option value="3">+3 trở lên</option></select></div><div class="section"><div class="sectionhead">Excellent <span class="muted">· tối đa 6 dòng</span><span id="af-count" style="float:right">0/6</span></div><div class="exgrid" id="af-ex"></div></div><div class="section"><label class="check"><input id="af-equipped" type="checkbox" checked>Giữ đồ đang mặc</label><label class="check"><input id="af-onlyex" type="checkbox">Chỉ lọc đồ Excellent</label></div><div class="row"><button class="primary" id="af-preview">CHẠY THỬ BỘ LỌC</button><button class="primary" id="af-sell">BÁN THỬ 1 ỨNG VIÊN</button></div><div class="status" id="af-status">Chưa chạy bộ lọc.</div><div class="list" id="af-list"></div><div class="section"><button class="mini" id="af-advanced-toggle">Cài đặt Rule nâng cao ▾</button><div class="advanced" id="af-advanced"><div class="row"><label>Rule</label><select id="af-rule"></select><button class="iconbtn" id="af-add">+</button><button class="iconbtn" id="af-copy">▢</button><button class="iconbtn red" id="af-del">×</button></div><div class="muted">Điều kiện trong cùng Rule là AND; giữa các Rule là OR.</div></div></div><button class="green" id="af-toggle">AUTO FILTER · ĐANG TẮT</button><div class="row"><button id="af-copyreport">Sao chép báo cáo</button></div></div>';
           document.documentElement.appendChild(root);
           var ownGear=root.querySelector('.gear');if(ownGear)ownGear.style.display='none';
-          var settingsPanel=document.querySelector('#mu-map-tools .panel');
-          if(settingsPanel&&!settingsPanel.querySelector('#mu-open-filter')){
-            var launch=document.createElement('button');launch.id='mu-open-filter';launch.className='action';launch.type='button';launch.textContent='🎒 AUTO FILTER PRO · INV';
-            settingsPanel.appendChild(launch);
-            launch.addEventListener('click',function(){panel.style.display=panel.style.display==='block'?'none':'block';});
-          }
           var $=function(q){return root.querySelector(q)},panel=$('.panel'),status=$('#af-status'),list=$('#af-list');
+          attachFilterLauncher();
+          if(!window.__muFilterLauncherObserver){
+            window.__muFilterLauncherObserver=new MutationObserver(function(){attachFilterLauncher()});
+            window.__muFilterLauncherObserver.observe(document.documentElement,{childList:true,subtree:true});
+          }
           var groups={w:'Vũ khí',s:'Khiên',h:'Mũ',a:'Giáp',p:'Quần',g:'Găng',b:'Giày'};
           var exNames={weapon:['Hồi máu khi hạ quái','Hồi mana khi hạ quái','Sát thương +2%','Sát thương xuất sắc +10%','Sát thương + cấp / 20','Tốc độ đánh +7'],defense:['Zen rơi +40%','Máu tối đa +4%','Mana tối đa +4%','Né đòn +10%','Giảm sát thương 4%','Phản 5% sát thương']};
           var exCodes={'0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'11':11};
