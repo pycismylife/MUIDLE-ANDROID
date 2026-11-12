@@ -174,19 +174,39 @@ class MainActivity : Activity() {
             if (readBusy || (!force && maps.length)) return;
             var win = document.getElementById('wMap');
             var button = document.getElementById('bMap');
-            if (!win || !button) {
-              status.textContent = 'Chưa tìm thấy bảng bản đồ trong game.';
+            if (!win) {
+              status.textContent = 'Chưa tìm thấy khung danh sách bản đồ trong game.';
               return;
             }
             readBusy = true;
             var openedByUs = !visible(win);
             var started = Date.now();
             var openRequested = false;
-            status.textContent = 'Đang mở danh sách bản đồ để tải dữ liệu…';
+            var openMethod = '';
+            status.textContent = 'Đang mở bảng Di chuyển (M)…';
+            function sendMapShortcut() {
+              // The game's map window is bound to the M shortcut (title: "Di chuyển (M)").
+              // Dispatch on body so bubbling reaches document/window keyboard handlers.
+              var target = document.body || document;
+              var down = new KeyboardEvent('keydown', {
+                key:'m', code:'KeyM', keyCode:77, which:77, bubbles:true, cancelable:true
+              });
+              var up = new KeyboardEvent('keyup', {
+                key:'m', code:'KeyM', keyCode:77, which:77, bubbles:true, cancelable:true
+              });
+              target.dispatchEvent(down);
+              target.dispatchEvent(up);
+            }
             function requestOpen() {
               if (openRequested || visible(win)) return;
               openRequested = true;
-              button.click();
+              if (button && typeof button.click === 'function') {
+                button.click();
+                openMethod = 'button';
+              } else {
+                sendMapShortcut();
+                openMethod = 'shortcut';
+              }
             }
             requestOpen();
             (function poll() {
@@ -198,15 +218,17 @@ class MainActivity : Activity() {
                 }).filter(function(m){return m.id!==null && m.id!=='';});
                 if (fresh.length) maps = fresh;
               }
-              if ((isOpen && maps.length) || Date.now()-started >= 8000) {
-                if (openedByUs && visible(win)) button.click();
+              if ((isOpen && maps.length) || Date.now()-started >= 10000) {
+                if (openedByUs && visible(win)) {
+                  if (button && typeof button.click === 'function') button.click();
+                  else sendMapShortcut();
+                }
                 readBusy = false;
                 readTries++;
                 if (isOpen && maps.length) renderMaps();
-                else status.textContent = 'Không tải được danh sách map. Hãy thử TẢI LẠI MAP khi game đã vào đầy đủ.';
+                else status.textContent = 'Không mở được bảng Di chuyển (M) để đọc map. Đã thử: ' + (openMethod || 'phím M') + '.';
                 return;
               }
-              if (!visible(win)) requestOpen();
               setTimeout(poll,180);
             })();
           }
