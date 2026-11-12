@@ -110,12 +110,19 @@ class MainActivity : Activity() {
           var readTries = 0;
 
           function visible(el) {
-            if (!el || el.hidden || el.getAttribute('aria-hidden') === 'true') return false;
-            var r = el.getBoundingClientRect(), s = getComputedStyle(el);
-            var opacity = Number(s.opacity);
-            return r.width > 0 && r.height > 0 &&
-              s.display !== 'none' && s.visibility !== 'hidden' &&
-              (!Number.isFinite(opacity) || opacity > 0.01);
+            if (!el || !el.isConnected) return false;
+            var node = el;
+            while (node && node.nodeType === 1) {
+              var cs = getComputedStyle(node);
+              if (node.hidden || node.getAttribute('aria-hidden') === 'true' ||
+                  cs.display === 'none' || cs.visibility === 'hidden' ||
+                  Number(cs.opacity) <= 0.01) return false;
+              node = node.parentElement;
+            }
+            var rect = el.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0 &&
+              rect.bottom > 0 && rect.right > 0 &&
+              rect.top < window.innerHeight && rect.left < window.innerWidth;
           }
           function rows() { return Array.prototype.slice.call(document.querySelectorAll('#wMap .zr[data-z]')); }
           function currentMap() {
@@ -173,25 +180,34 @@ class MainActivity : Activity() {
             }
             readBusy = true;
             var openedByUs = !visible(win);
-            status.textContent = 'Đang mở danh sách bản đồ để tải dữ liệu…';
-            if (openedByUs) button.click();
             var started = Date.now();
+            var openRequested = false;
+            status.textContent = 'Đang mở danh sách bản đồ để tải dữ liệu…';
+            function requestOpen() {
+              if (openRequested || visible(win)) return;
+              openRequested = true;
+              button.click();
+            }
+            requestOpen();
             (function poll() {
-              var found = rows();
+              var isOpen = visible(win);
+              var found = isOpen ? rows() : [];
               if (found.length) {
-                maps = found.map(function(row) {
+                var fresh = found.map(function(row) {
                   return {id:row.getAttribute('data-z'),name:(row.querySelector('b')||row).textContent.trim(),locked:row.classList.contains('lock')};
                 }).filter(function(m){return m.id!==null && m.id!=='';});
+                if (fresh.length) maps = fresh;
               }
-              if (maps.length || Date.now()-started >= 6000) {
+              if ((isOpen && maps.length) || Date.now()-started >= 8000) {
                 if (openedByUs && visible(win)) button.click();
                 readBusy = false;
                 readTries++;
-                if (maps.length) renderMaps();
-                else status.textContent = 'Không tải được danh sách map. Hãy vào game đầy đủ rồi bấm TẢI LẠI MAP.';
+                if (isOpen && maps.length) renderMaps();
+                else status.textContent = 'Không tải được danh sách map. Hãy thử TẢI LẠI MAP khi game đã vào đầy đủ.';
                 return;
               }
-              setTimeout(poll,150);
+              if (!visible(win)) requestOpen();
+              setTimeout(poll,180);
             })();
           }
           function levelValue() {
