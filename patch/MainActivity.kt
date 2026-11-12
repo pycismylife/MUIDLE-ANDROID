@@ -89,10 +89,15 @@ class MainActivity : Activity() {
 
           var root = document.createElement('div');
           root.id = 'mu-map-tools';
-          root.innerHTML = '<button class="gear" type="button" aria-label="Auto Move Map">⚙</button><div class="panel"><div class="heading">AUTO MOVE MAP</div><div class="rule"><span>Lv 1</span><span>-</span><input id="mu-map-limit" type="number" min="1" max="400" value="300"><span>tại</span><select id="mu-map-y"><option value="">Chọn Map Y</option></select></div><div class="rule"><span id="mu-map-level-label">Lv 300</span><span>-</span><span class="reset-value" id="mu-map-reset-value">Reset</span><span>tại</span><select id="mu-map-z"><option value="">Chọn Map Z</option></select></div><button class="action" id="mu-map-toggle" type="button">AUTO MOVE MAP · ĐÃ TẮT</button></div>';
+          root.innerHTML = '<button class="gear" type="button" aria-label="Auto Move Map">⚙</button><div class="panel"><div class="heading">AUTO MOVE MAP</div><button class="action" id="mu-open-filter" type="button">🎒 AUTO FILTER</button><div class="rule"><span>Lv 1</span><span>-</span><input id="mu-map-limit" type="number" min="1" max="400" value="300"><span>tại</span><select id="mu-map-y"><option value="">Chọn Map Y</option></select></div><div class="rule"><span id="mu-map-level-label">Lv 300</span><span>-</span><span class="reset-value" id="mu-map-reset-value">Reset</span><span>tại</span><select id="mu-map-z"><option value="">Chọn Map Z</option></select></div><button class="action" id="mu-map-toggle" type="button">AUTO MOVE MAP · ĐÃ TẮT</button></div>';
           document.documentElement.appendChild(root);
 
           var panel = root.querySelector('.panel');
+          root.querySelector('#mu-open-filter').onclick = function () {
+            var filterPanel = document.querySelector('#mu-inv-inspector .panel');
+            if (!filterPanel) return;
+            filterPanel.style.display = getComputedStyle(filterPanel).display === 'none' ? 'block' : 'none';
+          };
           var limitInput = root.querySelector('#mu-map-limit');
           var mapY = root.querySelector('#mu-map-y');
           var mapZ = root.querySelector('#mu-map-z');
@@ -346,34 +351,8 @@ class MainActivity : Activity() {
     private fun installAutoFilter() {
         val js = """
         (function(){
-          function attachFilterLauncher(){
-            var settingsPanel=document.querySelector('#mu-map-tools .panel');
-            if(!settingsPanel)return false;
-            var launch=settingsPanel.querySelector('#mu-open-filter');
-            if(!launch){
-              launch=document.createElement('button');
-              launch.id='mu-open-filter';
-              launch.className='action';
-              launch.type='button';
-              launch.textContent='🎒 AUTO FILTER';
-              var heading=settingsPanel.querySelector('.heading');
-              if(heading&&heading.nextSibling)settingsPanel.insertBefore(launch,heading.nextSibling);
-              else settingsPanel.insertBefore(launch,settingsPanel.firstChild);
-            }
-            launch.onclick=function(){
-              var filterPanel=document.querySelector('#mu-inv-inspector .panel');
-              if(!filterPanel)return;
-              filterPanel.style.display=(getComputedStyle(filterPanel).display==='none')?'block':'none';
-            };
-            return true;
-          }
           var old=document.getElementById('mu-inv-inspector');
           if(window.__muAutoFilterProInstalled&&old){
-            attachFilterLauncher();
-            if(!window.__muFilterLauncherObserver){
-              window.__muFilterLauncherObserver=new MutationObserver(function(){attachFilterLauncher()});
-              window.__muFilterLauncherObserver.observe(document.documentElement,{childList:true,subtree:true});
-            }
             return;
           }
           if(old)old.remove();
@@ -386,11 +365,6 @@ class MainActivity : Activity() {
           document.documentElement.appendChild(root);
           var ownGear=root.querySelector('.gear');if(ownGear)ownGear.style.display='none';
           var $=function(q){return root.querySelector(q)},panel=$('.panel'),status=$('#af-status'),list=$('#af-list');
-          attachFilterLauncher();
-          if(!window.__muFilterLauncherObserver){
-            window.__muFilterLauncherObserver=new MutationObserver(function(){attachFilterLauncher()});
-            window.__muFilterLauncherObserver.observe(document.documentElement,{childList:true,subtree:true});
-          }
           var groups={w:'Vũ khí',s:'Khiên',h:'Mũ',a:'Giáp',p:'Quần',g:'Găng',b:'Giày'};
           var exNames={weapon:['Hồi máu khi hạ quái','Hồi mana khi hạ quái','Sát thương +2%','Sát thương xuất sắc +10%','Sát thương + cấp / 20','Tốc độ đánh +7'],defense:['Zen rơi +40%','Máu tối đa +4%','Mana tối đa +4%','Né đòn +10%','Giảm sát thương 4%','Phản 5% sát thương']};
           var exCodes={'0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'11':11};
