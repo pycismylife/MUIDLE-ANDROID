@@ -1,11 +1,6 @@
 package net.hoainiem2003.muidle
 
 import android.annotation.SuppressLint
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.webkit.JavascriptInterface
-import android.widget.Toast
 import android.app.Activity
 import android.graphics.Color
 import android.os.Bundle
@@ -386,6 +381,7 @@ class MainActivity : Activity() {
               if (!c) c=JSON.parse(localStorage.getItem('muAutoFilterProCommon')||'null');
               if (c && typeof c==='object') common=Object.assign(common,c);
               active=localStorage.getItem('muAutoFilterCleanActive')==='1' || localStorage.getItem('muAutoFilterProActive')==='1';
+              if (!rules.some(function(rule){return rule.excellent.length>0;})) active=false;
             } catch(e) { rules=[{excellent:[]}]; active=false; }
           }
           function renderRules() {
