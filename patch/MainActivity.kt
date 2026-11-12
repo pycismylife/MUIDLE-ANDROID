@@ -80,269 +80,194 @@ class MainActivity : Activity() {
     private fun installAutoMoveMap() {
         val js = """
         (function () {
-          if (window.__muAutoMoveMapInstalled) return;
+          if (window.__muAutoMoveMapInstalled && document.getElementById('mu-map-tools')) return;
           window.__muAutoMoveMapInstalled = true;
+          var old = document.getElementById('mu-map-tools');
+          if (old) old.remove();
 
-          var css = document.createElement('style');
-          css.textContent = '#mu-map-tools{position:fixed;z-index:2147483647;top:12px;left:12px;font:13px Arial,sans-serif;color:#f1dfb2;max-width:calc(100vw - 24px)}#mu-map-tools button,#mu-map-tools select,#mu-map-tools input{font:inherit}#mu-map-tools .gear{width:42px;height:42px;border:1px solid #80683f;border-radius:0;background:#21190f;color:#f3dfb5;font-size:21px;box-shadow:0 3px 12px #0008}#mu-map-tools .panel{display:none;margin-top:6px;padding:10px;background:#17130f;border:1px solid #80683f;border-radius:0;width:min(470px,calc(100vw - 30px));max-height:72vh;overflow:auto;box-sizing:border-box;box-shadow:0 8px 28px #0009}#mu-map-tools .heading{font-weight:700;margin-bottom:12px}#mu-map-tools .rule{display:grid;grid-template-columns:86px 12px 70px 28px minmax(110px,1fr);align-items:center;gap:5px;margin:8px 0;white-space:nowrap}#mu-map-tools .rule input,#mu-map-tools .reset-value{width:100%;min-width:0;box-sizing:border-box;padding:8px 4px;background:#302515;color:#f3dfb5;border:1px solid #80683f;border-radius:0;text-align:center}#mu-map-tools .reset-value{display:block;border-color:#80683f}#mu-map-tools select{width:100%;min-width:0;box-sizing:border-box;padding:8px 5px;background:#302515;color:#f3dfb5;border:1px solid #80683f;border-radius:0}#mu-map-tools button.action{width:100%;padding:9px;margin-top:8px;border:1px solid #80683f;border-radius:0;background:#382c1b;color:#f3dfb5}#mu-map-tools button.on{background:#205b32;border-color:#4c9c61}';
-          document.head.appendChild(css);
+          var style = document.getElementById('mu-auto-tools-style');
+          if (!style) {
+            style = document.createElement('style');
+            style.id = 'mu-auto-tools-style';
+            style.textContent = '#mu-map-tools{position:fixed;z-index:2147483647;top:12px;left:12px;color:#f3dfb5;font:13px Arial,sans-serif;max-width:calc(100vw - 24px)}#mu-map-tools button,#mu-map-tools input,#mu-map-tools select{font:inherit;box-sizing:border-box}#mu-map-tools .gear{width:42px;height:42px;background:#21190f;color:#f3dfb5;border:1px solid #80683f;font-size:21px}#mu-map-tools .panel{display:none;margin-top:6px;padding:11px;background:#17130f;border:1px solid #80683f;width:min(480px,calc(100vw - 30px));max-height:82vh;overflow:auto;box-sizing:border-box;box-shadow:0 8px 28px #0009}#mu-map-tools .heading{font-weight:700;margin-bottom:10px}#mu-map-tools .mapline{display:grid;grid-template-columns:58px 12px 64px 28px minmax(100px,1fr);align-items:center;gap:5px;margin:8px 0}#mu-map-tools input,#mu-map-tools select{width:100%;min-width:0;padding:8px 5px;background:#302515;color:#f3dfb5;border:1px solid #80683f}#mu-map-tools .action{width:100%;padding:9px;margin-top:8px;background:#382c1b;color:#f3dfb5;border:1px solid #80683f}#mu-map-tools .on{background:#205b32!important;border-color:#4c9c61!important}#mu-map-tools .status{font-size:11px;line-height:1.45;color:#e8c979;margin-top:8px;white-space:normal}#mu-map-tools .af-section{border-top:1px solid #80683f;margin-top:13px;padding-top:11px}#mu-map-tools .af-title{font-weight:700;margin-bottom:9px;font-size:14px}#mu-map-tools .af-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}#mu-map-tools .af-field{min-width:0}#mu-map-tools .af-label{font-size:11px;color:#d7c49d;margin-bottom:4px}#mu-map-tools .af-rule{border:1px solid #80683f;background:#21190f;padding:8px;margin:8px 0}#mu-map-tools .af-rulehead{display:flex;align-items:center;justify-content:space-between;font-weight:700;margin-bottom:7px}#mu-map-tools .af-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}#mu-map-tools .af-tag{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;background:#302515;border:1px solid #b58b48;font-size:11px}#mu-map-tools .af-tag button{border:0;background:transparent;color:#ffd9c8;padding:0 2px;font-size:16px}#mu-map-tools .af-row{display:flex;gap:6px;align-items:center;margin-top:7px}#mu-map-tools .af-row>*{min-width:0;flex:1}#mu-map-tools .af-btn{padding:8px;background:#382c1b;color:#f3dfb5;border:1px solid #80683f}#mu-map-tools .af-danger{background:#65231b;border-color:#d87855}#mu-map-tools .af-muted{font-size:11px;color:#cdb98e;line-height:1.4}#mu-map-tools .af-check{display:inline-flex;align-items:center;gap:5px;margin:6px 9px 2px 0}#mu-map-tools .af-check input{width:17px;height:17px;accent-color:#1ebc79}#mu-map-tools .af-status{font-size:11px;color:#e8c979;line-height:1.4;margin:8px 0}#mu-map-tools .af-list{max-height:20vh;overflow:auto;font-size:11px}#mu-map-tools .af-item{padding:5px 0;border-top:1px solid #594329}';
+            document.head.appendChild(style);
+          }
 
           var root = document.createElement('div');
           root.id = 'mu-map-tools';
-          root.innerHTML = '<button class="gear" type="button" aria-label="Auto Move Map">⚙</button><div class="panel"><div class="heading">AUTO MOVE MAP</div><button class="action" id="mu-open-filter" type="button">🎒 AUTO FILTER</button><div class="rule"><span>Lv 1</span><span>-</span><input id="mu-map-limit" type="number" min="1" max="400" value="300"><span>tại</span><select id="mu-map-y"><option value="">Chọn Map Y</option></select></div><div class="rule"><span id="mu-map-level-label">Lv 300</span><span>-</span><span class="reset-value" id="mu-map-reset-value">Reset</span><span>tại</span><select id="mu-map-z"><option value="">Chọn Map Z</option></select></div><button class="action" id="mu-map-toggle" type="button">AUTO MOVE MAP · ĐÃ TẮT</button></div>';
+          root.innerHTML = '<button class="gear" type="button" aria-label="Cài đặt Auto Move Map và Auto Filter">⚙</button><div class="panel"><div class="heading">AUTO MOVE MAP</div><div class="mapline"><span>Lv 1</span><span>-</span><input id="mu-map-limit" type="number" min="1" max="400" value="300"><span>tại</span><select id="mu-map-y"><option value="">Chọn Map Y</option></select></div><div class="mapline"><span id="mu-map-level">Lv 301+</span><span>-</span><span id="mu-map-reset" style="text-align:center;padding:8px;border:1px solid #80683f">Reset</span><span>tại</span><select id="mu-map-z"><option value="">Chọn Map Z</option></select></div><button class="action" id="mu-map-toggle" type="button">AUTO MOVE MAP · ĐÃ TẮT</button><div class="status" id="mu-map-status">Đang chờ dữ liệu bản đồ trong game…</div><div id="mu-auto-filter-slot"></div></div>';
           document.documentElement.appendChild(root);
 
           var panel = root.querySelector('.panel');
-          root.querySelector('#mu-open-filter').onclick = function () {
-            var filterPanel = document.querySelector('#mu-inv-inspector .panel');
-            if (!filterPanel) return;
-            filterPanel.style.display = getComputedStyle(filterPanel).display === 'none' ? 'block' : 'none';
-          };
           var limitInput = root.querySelector('#mu-map-limit');
           var mapY = root.querySelector('#mu-map-y');
           var mapZ = root.querySelector('#mu-map-z');
-          var levelLabel = root.querySelector('#mu-map-level-label');
-          var resetValue = root.querySelector('#mu-map-reset-value');
           var toggle = root.querySelector('#mu-map-toggle');
-          var cfg = { limit: 300, y: '', z: '', on: false };
-          var options = [];
+          var status = root.querySelector('#mu-map-status');
+          var cfg = {limit:300,y:'',z:'',on:false};
+          var maps = [];
           var busy = false;
           var lastReset = null;
-          var lastStage = '';
-          var tickTimer = null;
+          var resetOverrideUntil = 0;
+          var lastAttempt = 0;
+          var failed = 0;
+          var readBusy = false;
+          var readTries = 0;
 
-          function say(message) { /* trạng thái chuyển map không hiển thị trên panel */ }
-          function resetRequiredLevel(resetCount) { return Math.min(400, 300 + 20 * Math.floor((Math.max(0, Number(resetCount) || 0) + 1) / 5)); }
-          function paintLevelLabels() {
-            var threshold = Math.max(1, Math.min(400, Math.floor(Number(limitInput.value) || 300)));
-            levelLabel.textContent = 'Lv ' + threshold;
-            var resetCount = getReset();
-            resetValue.textContent = resetCount === null ? 'Reset' : String(resetRequiredLevel(resetCount));
-          }
-          function safeLoad() {
-            try {
-              var saved = JSON.parse(localStorage.getItem('mu_auto_move_map_v1') || '{}');
-              if (saved && typeof saved === 'object') cfg = Object.assign(cfg, saved);
-            } catch (e) {}
-            cfg.limit = Math.max(1, Math.min(400, Math.floor(Number(cfg.limit) || 300)));
-            cfg.on = cfg.on === true;
-          }
-          function save() {
-            cfg.limit = Math.max(1, Math.min(400, Math.floor(Number(limitInput.value) || 300)));
-            cfg.y = mapY.value || cfg.y || '';
-            cfg.z = mapZ.value || cfg.z || '';
-            try { localStorage.setItem('mu_auto_move_map_v1', JSON.stringify(cfg)); }
-            catch (e) { say('Không lưu được cấu hình. Hãy kiểm tra bộ nhớ trình duyệt.'); }
-          }
-          function paintToggle() {
-            toggle.textContent = cfg.on ? 'AUTO MOVE MAP · ĐANG BẬT' : 'AUTO MOVE MAP · ĐÃ TẮT';
-            toggle.classList.toggle('on', cfg.on);
-          }
-          function isVisible(el) {
+          function visible(el) {
             if (!el) return false;
-            var r = el.getBoundingClientRect();
-            var s = window.getComputedStyle(el);
+            var r = el.getBoundingClientRect(), s = getComputedStyle(el);
             return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden';
           }
-          function mapRows() {
-            return Array.from(document.querySelectorAll('#wMap .zr[data-z]'));
+          function rows() { return Array.prototype.slice.call(document.querySelectorAll('#wMap .zr[data-z]')); }
+          function currentMap() {
+            var row = document.querySelector('#wMap .zr.cur[data-z]');
+            return row ? row.getAttribute('data-z') : null;
           }
-          function renderOptions() {
-            var html = '<option value="">-- Chọn bản đồ --</option>' + options.map(function (m) {
+          function safeSave() {
+            cfg.limit = Math.max(1,Math.min(400,Math.floor(Number(limitInput.value)||300)));
+            cfg.y = mapY.value || cfg.y || '';
+            cfg.z = mapZ.value || cfg.z || '';
+            try { localStorage.setItem('mu_auto_move_map_v2',JSON.stringify(cfg)); } catch(e) {}
+          }
+          function loadConfig() {
+            try {
+              var saved = JSON.parse(localStorage.getItem('mu_auto_move_map_v2') || 'null');
+              if (saved && typeof saved === 'object') cfg = Object.assign(cfg,saved);
+              else {
+                var legacy = JSON.parse(localStorage.getItem('mu_auto_move_map_v1') || 'null');
+                if (legacy && typeof legacy === 'object') cfg = Object.assign(cfg,legacy);
+              }
+            } catch(e) {}
+            cfg.limit = Math.max(1,Math.min(400,Math.floor(Number(cfg.limit)||300)));
+            cfg.on = cfg.on === true;
+            limitInput.value = String(cfg.limit);
+          }
+          function paint() {
+            root.querySelector('#mu-map-level').textContent = 'Lv ' + (cfg.limit + 1) + '+';
+            var reset = Number(window.S && window.S.reset);
+            root.querySelector('#mu-map-reset').textContent = Number.isFinite(reset) && reset >= 0 ? String(reset) : 'Reset';
+            toggle.textContent = cfg.on ? 'AUTO MOVE MAP · ĐANG BẬT' : 'AUTO MOVE MAP · ĐÃ TẮT';
+            toggle.classList.toggle('on',cfg.on);
+          }
+          function renderMaps() {
+            var html = '<option value="">-- Chọn bản đồ --</option>' + maps.map(function(m) {
               return '<option value="' + String(m.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">' +
                 String(m.name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') +
                 (m.locked ? ' · Chưa mở khóa' : '') + '</option>';
             }).join('');
             mapY.innerHTML = html;
             mapZ.innerHTML = html;
-            mapY.value = options.some(function (m) { return m.id === cfg.y; }) ? cfg.y : '';
-            mapZ.value = options.some(function (m) { return m.id === cfg.z; }) ? cfg.z : '';
-            if (cfg.y && !mapY.value) say('Đã tải danh sách map, nhưng Map Y đã lưu không còn trong danh sách. Vui lòng chọn lại.');
-            else if (cfg.z && !mapZ.value) say('Đã tải danh sách map, nhưng Map Z đã lưu không còn trong danh sách. Vui lòng chọn lại.');
-            else say('Đã tải ' + options.length + ' bản đồ. Chọn Map Y và Map Z để tiếp tục.');
+            mapY.value = maps.some(function(m){return m.id===cfg.y;}) ? cfg.y : '';
+            mapZ.value = maps.some(function(m){return m.id===cfg.z;}) ? cfg.z : '';
+            if (!maps.some(function(m){return m.id===cfg.y;})) cfg.y = '';
+            if (!maps.some(function(m){return m.id===cfg.z;})) cfg.z = '';
+            safeSave();
+            status.textContent = 'Đã tải ' + maps.length + ' bản đồ. Chọn Map Y và Map Z.';
           }
-          function readMapOptions() {
+          function readMaps() {
+            if (readBusy || maps.length) return;
             var win = document.getElementById('wMap');
             var button = document.getElementById('bMap');
-            var openedByUs = !isVisible(win);
-            if (openedByUs) {
-              if (!button) { say('Không tìm thấy nút mở danh sách bản đồ của game.'); return; }
-              button.click();
-            }
-            say('Đang đọc danh sách bản đồ từ game…');
-            setTimeout(function () {
-              var rows = mapRows();
-              options = rows.map(function (row) {
-                return {
-                  id: row.getAttribute('data-z'),
-                  name: (row.querySelector('b') || row).textContent.trim(),
-                  locked: row.classList.contains('lock')
-                };
-              }).filter(function (m) { return m.id !== null && m.id !== ''; });
-              if (openedByUs && button) button.click();
-              if (!options.length) {
-                say('Chưa đọc được danh sách map. Hãy vào nhân vật trong game rồi tải lại danh sách.');
-                return;
-              }
-              renderOptions();
-            }, 650);
+            if (!win || !button) return;
+            readBusy = true;
+            var openedByUs = !visible(win);
+            if (openedByUs) button.click();
+            setTimeout(function() {
+              maps = rows().map(function(row) {
+                return {id:row.getAttribute('data-z'),name:(row.querySelector('b')||row).textContent.trim(),locked:row.classList.contains('lock')};
+              }).filter(function(m){return m.id!==null && m.id!=='';});
+              if (openedByUs && visible(win)) button.click();
+              readBusy = false;
+              readTries++;
+              if (maps.length) renderMaps();
+              else if (readTries >= 12) status.textContent = 'Chưa đọc được danh sách map. Hãy vào nhân vật trong game rồi mở lại bảng cài đặt.';
+            },500);
           }
-          function getLevel() {
-            var stateLevel = Number(window.S && window.S.lv);
-            if (Number.isFinite(stateLevel) && stateLevel > 0) return stateLevel;
-            var text = (document.getElementById('lvl') || {}).textContent || '';
-            var match = text.match(/(?:Lv|Level)\s*(\d+)/i);
-            return match ? Number(match[1]) : null;
+          function levelValue() {
+            var n = Number(window.S && window.S.lv);
+            if (Number.isFinite(n) && n > 0) return n;
+            var t = (document.getElementById('lvl') || {}).textContent || '';
+            var m = t.match(/(?:Lv|Level)\s*(\d+)/i);
+            return m ? Number(m[1]) : null;
           }
-          function getReset() {
-            var value = Number(window.S && window.S.reset);
-            return Number.isFinite(value) && value >= 0 ? value : null;
+          function resetValue() {
+            var n = Number(window.S && window.S.reset);
+            return Number.isFinite(n) && n >= 0 ? n : null;
           }
-          function currentMapId() {
-            var row = document.querySelector('#wMap .zr.cur[data-z]');
-            return row ? row.getAttribute('data-z') : null;
-          }
-          var pendingTarget = '';
-          var lastAttemptAt = 0;
-          var failedAttempts = 0;
-          function closeMapOnlyIfWeOpenedIt(win, button, openedByUs) {
-            if (openedByUs && button && isVisible(win)) button.click();
-          }
-          function switchMap(id, label) {
-            if (!id || busy || pendingTarget === String(id)) return;
-            var nowTime = Date.now();
-            if (nowTime - lastAttemptAt < 12000) return;
-            if (failedAttempts >= 2) {
-              say('Chưa xác nhận được chuyển map sau 2 lần. Tạm dừng để không làm phiền thao tác của bạn; hãy kiểm tra map rồi bật lại.');
-              return;
-            }
+          function switchMap(id,label) {
+            if (!id || busy || Date.now()-lastAttempt < 9000) return;
             busy = true;
-            pendingTarget = String(id);
-            lastAttemptAt = nowTime;
-            var win = document.getElementById('wMap');
-            var button = document.getElementById('bMap');
-            var openedByUs = !isVisible(win);
+            lastAttempt = Date.now();
+            var win = document.getElementById('wMap'), button = document.getElementById('bMap');
+            var openedByUs = !visible(win);
             if (openedByUs) {
-              if (!button) {
-                busy = false; pendingTarget = '';
-                say('Không tìm thấy nút mở bản đồ.');
-                return;
-              }
+              if (!button) { busy=false; failed++; status.textContent='Không tìm thấy bảng bản đồ.'; return; }
               button.click();
             }
-            say('Đang chuyển một lần sang ' + label + '…');
-            setTimeout(function () {
-              var row = mapRows().find(function (item) { return item.getAttribute('data-z') === String(id); });
-              if (!row) {
-                closeMapOnlyIfWeOpenedIt(win, button, openedByUs);
-                busy = false; pendingTarget = '';
-                failedAttempts++;
-                say('Không tìm thấy map đã chọn. Đã dừng, không tự mở danh sách liên tục.');
-                return;
-              }
-              if (row.classList.contains('lock')) {
-                closeMapOnlyIfWeOpenedIt(win, button, openedByUs);
-                busy = false; pendingTarget = '';
-                failedAttempts = 2;
-                say(label + ' chưa mở khóa. Auto Move tạm dừng.');
+            setTimeout(function() {
+              var row = rows().find(function(r){return r.getAttribute('data-z')===String(id);});
+              if (!row || row.classList.contains('lock')) {
+                if (openedByUs && visible(win)) button.click();
+                busy=false; failed++;
+                status.textContent = !row ? 'Không tìm thấy map đã chọn.' : label + ' chưa mở khóa.';
                 return;
               }
               if (row.classList.contains('cur')) {
-                closeMapOnlyIfWeOpenedIt(win, button, openedByUs);
-                busy = false; pendingTarget = '';
-                failedAttempts = 0;
-                say('Đã ở đúng ' + label + '. Không cần chuyển map.');
+                if (openedByUs && visible(win)) button.click();
+                busy=false; failed=0; status.textContent='Đã ở đúng ' + label + '.';
                 return;
               }
               row.click();
-              setTimeout(function () {
-                var current = mapRows().find(function (item) { return item.classList.contains('cur'); });
-                var reached = current && current.getAttribute('data-z') === String(id);
-                closeMapOnlyIfWeOpenedIt(win, button, openedByUs);
-                busy = false;
-                if (reached) {
-                  pendingTarget = '';
-                  failedAttempts = 0;
-                  say('Đã đến ' + label + '. Auto Move sẽ không gửi lệnh nữa khi vẫn ở đúng map.');
-                } else {
-                  failedAttempts++;
-                  pendingTarget = '';
-                  say('Đã gửi 1 lệnh chuyển ' + label + '. Đang chờ game cập nhật; sẽ không click lặp liên tục.');
-                }
-              }, 1400);
-            }, 350);
+              setTimeout(function() {
+                var reached = currentMap() === String(id);
+                if (openedByUs && visible(win)) button.click();
+                busy=false;
+                if (reached) { failed=0; status.textContent='Đã chuyển đến ' + label + '.'; }
+                else { failed++; status.textContent='Game chưa xác nhận chuyển map. Đã gửi một lần, không click lặp.'; }
+              },1100);
+            },350);
           }
           function tick() {
-            if (!cfg.on || busy) return;
-            var level = getLevel();
-            var reset = getReset();
-            if (level === null || reset === null) return;
-            paintLevelLabels();
+            paint();
+            if (!cfg.on || busy || failed >= 2) return;
+            var lv = levelValue(), reset = resetValue();
+            if (lv === null || reset === null) return;
             if (lastReset === null) lastReset = reset;
             if (reset > lastReset) {
               lastReset = reset;
-              lastStage = 'y';
-              failedAttempts = 0;
-              pendingTarget = '';
-              if (!cfg.y) { say('Đã Reset nhưng chưa chọn Map Y.'); return; }
-            } else if (reset < lastReset) {
-              lastReset = reset;
-            }
-            var targetStage = level < cfg.limit ? 'y' : 'z';
-            var targetId = targetStage === 'y' ? cfg.y : cfg.z;
+              resetOverrideUntil = Date.now() + 8000;
+              failed = 0;
+            } else if (reset < lastReset) lastReset = reset;
+            var targetStage = (Date.now() < resetOverrideUntil || lv <= cfg.limit) ? 'y' : 'z';
+            var id = targetStage === 'y' ? cfg.y : cfg.z;
             var label = targetStage === 'y' ? 'Map Y' : 'Map Z';
-            if (!targetId) { say('Chưa chọn ' + label + '.'); return; }
-            var currentId = currentMapId();
-            if (currentId && String(currentId) === String(targetId)) {
-              pendingTarget = '';
-              failedAttempts = 0;
-              lastStage = targetStage;
-              return;
-            }
-            if (pendingTarget === String(targetId) || Date.now() - lastAttemptAt < 12000) return;
-            if (failedAttempts >= 2) return;
-            lastStage = targetStage;
-            switchMap(targetId, label);
+            if (!id) { status.textContent='Chưa chọn ' + label + '.'; return; }
+            if (currentMap() === String(id)) { failed=0; return; }
+            if (Date.now()-lastAttempt < 9000) return;
+            switchMap(id,label);
           }
 
-          safeLoad();
-          // Tự đọc danh sách map khi vào game, không cần nút tải thủ công.
-          if (!options.length) readMapOptions();
-          limitInput.value = String(cfg.limit);
-          paintLevelLabels();
-          paintToggle();
-          root.querySelector('.gear').onclick = function () {
+          loadConfig();
+          paint();
+          root.querySelector('.gear').onclick = function() {
             panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
- 
+            if (panel.style.display === 'block') readMaps();
           };
- 
-          limitInput.onchange = function () { save(); paintLevelLabels(); lastStage = ''; };
-          mapY.onchange = function () { cfg.y = mapY.value; save(); lastStage = ''; say('Đã lưu Map Y.'); };
-          mapZ.onchange = function () { cfg.z = mapZ.value; save(); lastStage = ''; say('Đã lưu Map Z.'); };
-          toggle.onclick = function () {
+          limitInput.onchange = function() { safeSave(); paint(); failed=0; };
+          mapY.onchange = function() { cfg.y=mapY.value; safeSave(); failed=0; };
+          mapZ.onchange = function() { cfg.z=mapZ.value; safeSave(); failed=0; };
+          toggle.onclick = function() {
             if (!cfg.on && (!mapY.value || !mapZ.value)) {
-              say('Đang tải danh sách map hoặc chưa chọn đủ Map Y và Map Z. Vui lòng chờ tải xong rồi chọn map.');
+              status.textContent='Hãy chờ tải map và chọn đủ Map Y, Map Z trước khi bật.';
               return;
             }
             cfg.on = !cfg.on;
-            if (cfg.on) {
-              cfg.y = mapY.value;
-              cfg.z = mapZ.value;
-              cfg.limit = Math.max(1, Math.min(400, Math.floor(Number(limitInput.value) || 300)));
-              lastReset = getReset();
-              lastStage = '';
-              save();
-              paintToggle();
-              say('Auto Move Map đã bật. Đang kiểm tra cấp độ để chọn map phù hợp…');
-              tick();
-            } else {
-              save();
-              paintToggle();
-              say('Auto Move Map đã tắt. Game giữ nguyên bản đồ hiện tại.');
-            }
+            if (cfg.on) { lastReset=resetValue(); failed=0; }
+            safeSave(); paint(); tick();
           };
-          tickTimer = window.setInterval(tick, 1000);
-          window.addEventListener('beforeunload', function () { if (tickTimer) clearInterval(tickTimer); });
+          window.setInterval(function(){ if (!maps.length && readTries < 12) readMaps(); tick(); },1000);
+          readMaps();
         })();
         """.trimIndent()
         webView.evaluateJavascript(js, null)
@@ -350,94 +275,280 @@ class MainActivity : Activity() {
 
     private fun installAutoFilter() {
         val js = """
-        (function(){
-          var old=document.getElementById('mu-inv-inspector');
-          if(window.__muAutoFilterProInstalled&&old){
-            return;
-          }
-          if(old)old.remove();
-          window.__muAutoFilterProInstalled=true;
-          var css=document.createElement('style');
-          css.textContent='#mu-inv-inspector{position:fixed;z-index:2147483646;left:10px;bottom:12px;color:#f3e5c2;font:14px Arial,sans-serif}#mu-inv-inspector *{box-sizing:border-box}#mu-inv-inspector .gear{width:44px;height:44px;background:#21180e;color:#f4dfb2;border:1px solid #b18a48;font-weight:bold}#mu-inv-inspector .panel{display:none;width:min(480px,calc(100vw - 20px));max-height:82vh;overflow:auto;background:linear-gradient(145deg,#1b140c,#100d09);border:1px solid #d0a653;padding:12px;box-shadow:0 5px 24px #000d}#mu-inv-inspector .brand{font-size:18px;font-weight:900;letter-spacing:.4px;margin:0 0 12px;color:#f7e8c6}#mu-inv-inspector .row{display:flex;align-items:center;gap:7px;margin:7px 0;flex-wrap:wrap}#mu-inv-inspector .row>label{font-weight:bold}#mu-inv-inspector select,#mu-inv-inspector input[type=number]{min-width:0;background:#302313;color:#f7e7c4;border:1px solid #c49a50;padding:8px;font:inherit}#mu-inv-inspector select{flex:1}#mu-inv-inspector button{font:inherit;color:#f7e7c4;background:#382916;border:1px solid #b58b48;padding:8px}#mu-inv-inspector button:disabled{opacity:.5}#mu-inv-inspector .iconbtn{min-width:38px;font-size:20px}#mu-inv-inspector .section{border:1px solid #9e793f;margin-top:9px;padding:8px}#mu-inv-inspector .sectionhead{font-weight:bold;margin-bottom:6px}#mu-inv-inspector label.check{display:inline-flex;align-items:center;gap:6px;margin:5px 9px 5px 0}#mu-inv-inspector input[type=checkbox]{width:19px;height:19px;accent-color:#1ebc79}#mu-inv-inspector .exgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px}#mu-inv-inspector .exgrid label{margin:3px 0}#mu-inv-inspector .status{color:#e8c979;margin:9px 0;font-size:12px;line-height:1.4}#mu-inv-inspector .green{background:linear-gradient(90deg,#075a37,#0d7a46);border:2px solid #55d69a;text-align:center;font-weight:bold;width:100%;padding:13px}#mu-inv-inspector .red{background:#65231b;border-color:#d87855}#mu-inv-inspector .list{font-size:12px;max-height:23vh;overflow:auto;line-height:1.4}#mu-inv-inspector .item{padding:6px 0;border-top:1px solid #594329}#mu-inv-inspector .candidate{color:#ffc56b}#mu-inv-inspector .keep{color:#9bd6a5}#mu-inv-inspector .muted{font-size:11px;color:#cdb98e}#mu-inv-inspector .advanced{display:none}#mu-inv-inspector .af-rule-card{border:1px solid #9e793f;border-radius:8px;margin:8px 0;padding:8px;background:#21190f}#mu-inv-inspector .af-rule-head{display:flex;align-items:center;justify-content:space-between;font-size:16px;margin-bottom:7px}#mu-inv-inspector .af-delete-rule{background:#7d211b;border-color:#b85a4d;padding:5px 10px}#mu-inv-inspector .af-chip-list{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0}#mu-inv-inspector .af-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid #b58b48;border-radius:5px;padding:5px 7px;background:#302515;font-size:12px}#mu-inv-inspector .af-chip button{padding:0 5px;border:0;background:transparent;color:#ffd9c8;font-size:18px}#mu-inv-inspector .af-add-select{flex:1;min-width:0}#mu-inv-inspector .af-add-ex{white-space:nowrap;background:#343052;border-color:#7770ad}#mu-inv-inspector .simplegrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}#mu-inv-inspector .simplegrid select{width:100%}#mu-inv-inspector .primary{width:100%;padding:12px;font-weight:bold}#mu-inv-inspector .mini{font-size:12px;padding:6px}';
-          document.head.appendChild(css);
-          var root=document.createElement('div');root.id='mu-inv-inspector';
-          root.innerHTML='<button class="gear">AF</button><div class="panel"><div class="brand">AUTO FILTER</div><div class="simplegrid"><div><div class="muted">Loại đồ</div><select id="af-type"><option value="w">Vũ khí</option><option value="s">Khiên</option><option value="h">Mũ</option><option value="a">Giáp</option><option value="p">Quần</option><option value="g">Găng</option><option value="b">Giày</option></select></div><div><div class="muted">Class sử dụng</div><select id="af-class"><option value="all">Tất cả class</option><option value="dw">Dark Wizard</option><option value="dk">Dark Knight</option><option value="el">Fairy Elf</option><option value="mg">Magic Gladiator</option><option value="dl">Dark Lord</option></select></div></div><div class="section"><div class="sectionhead">Điều kiện lọc</div><div class="simplegrid"><div><div class="muted">Option tối thiểu</div><select id="af-option"><option value="0">Không xét</option><option value="1">+1 trở lên</option><option value="2">+2 trở lên</option><option value="3">+3 trở lên</option><option value="4">+4 trở lên</option></select></div><div><div class="muted">Upgrade tối thiểu</div><select id="af-upgrade"><option value="0">Không xét</option><option value="3">+3 trở lên</option><option value="4">+4 trở lên</option><option value="5">+5 trở lên</option><option value="6">+6 trở lên</option><option value="7">+7 trở lên</option><option value="9">+9 trở lên</option><option value="10">+10 trở lên</option></select></div></div><label class="check"><input id="af-luck" type="checkbox">Luck (May mắn)</label><label class="check"><input id="af-bonus" type="checkbox">Bonus cấp</label><select id="af-bonus-min"><option value="0">Bonus bất kỳ</option><option value="1">+1 trở lên</option><option value="2">+2 trở lên</option><option value="3">+3 trở lên</option></select></div><div class="section"><label class="check"><input id="af-equipped" type="checkbox" checked>Giữ đồ đang mặc</label><label class="check"><input id="af-onlyex" type="checkbox">Chỉ lọc đồ Excellent</label></div><div class="section"><div class="sectionhead">Danh sách luật (OR)</div><div class="muted">Đạt các EX Option trong cùng một luật (AND); đạt một trong các luật sẽ được giữ.</div><div id="af-rules"></div><div class="row"><button class="primary" id="af-add-rule">＋ THÊM LUẬT</button></div></div><div class="row"><button class="primary" id="af-preview">CHẠY THỬ BỘ LỌC</button><button class="primary" id="af-sell">BÁN THỬ 1 ỨNG VIÊN</button></div><div class="status" id="af-status">Chưa chạy bộ lọc.</div><div class="list" id="af-list"></div><button class="green" id="af-toggle">AUTO FILTER · ĐANG TẮT</button><div class="row"><button id="af-copyreport">Sao chép báo cáo</button></div></div>';
-          document.documentElement.appendChild(root);
-          var ownGear=root.querySelector('.gear');if(ownGear)ownGear.style.display='none';
-          var $=function(q){return root.querySelector(q)},panel=$('.panel'),status=$('#af-status'),list=$('#af-list');
-          var groups={w:'Vũ khí',s:'Khiên',h:'Mũ',a:'Giáp',p:'Quần',g:'Găng',b:'Giày'};
-          var exNames={weapon:['Hồi máu khi hạ quái','Hồi mana khi hạ quái','Sát thương +2%','Sát thương xuất sắc +10%','Sát thương + cấp / 20','Tốc độ đánh +7'],defense:['Zen rơi +40%','Máu tối đa +4%','Mana tối đa +4%','Né đòn +10%','Giảm sát thương 4%','Phản 5% sát thương']};
-          var exCodes={'0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'11':11};
-          var rules=[],active=false,lastRows=[],reportText='';
-          var common={type:'w',class:'all',option:0,upgrade:0,luck:false,bonus:false,bonusMin:0,keepEquipped:true,onlyExcellent:false};
-          var exCatalog=[
-            {id:3,name:'Hồi máu khi hạ quái',kind:'w'},{id:9,name:'Hồi mana khi hạ quái',kind:'w'},
-            {id:1,name:'Sát thương +2%',kind:'w'},{id:0,name:'Sát thương xuất sắc +10%',kind:'w'},
-            {id:8,name:'Sát thương + cấp / 20',kind:'w'},{id:2,name:'Tốc độ đánh +7',kind:'w'},
-            {id:6,name:'Zen rơi +40%',kind:'d'},{id:4,name:'Máu tối đa +4%',kind:'d'},
-            {id:10,name:'Mana tối đa +4%',kind:'d'},{id:7,name:'Né đòn +10%',kind:'d'},
-            {id:5,name:'Giảm sát thương 4%',kind:'d'},{id:11,name:'Phản 5% sát thương',kind:'d'}
+        (function() {
+          var root = document.getElementById('mu-map-tools');
+          var slot = document.getElementById('mu-auto-filter-slot');
+          if (!root || !slot || slot.dataset.ready === '1') return;
+          slot.dataset.ready = '1';
+
+          var groups = {w:'Vũ khí',s:'Khiên',h:'Headgear (Helm + Circlet)',a:'Giáp',p:'Quần',g:'Găng',b:'Giày'};
+          var exCatalog = [
+            {id:3,name:'Hồi máu khi hạ quái',kind:'w'},
+            {id:9,name:'Hồi mana khi hạ quái',kind:'w'},
+            {id:1,name:'Sát thương +2%',kind:'w'},
+            {id:0,name:'Sát thương xuất sắc +10%',kind:'w'},
+            {id:8,name:'Sát thương + cấp / 20',kind:'w'},
+            {id:2,name:'Tốc độ đánh +7',kind:'w'},
+            {id:6,name:'Zen rơi +40%',kind:'d'},
+            {id:4,name:'Máu tối đa +4%',kind:'d'},
+            {id:10,name:'Mana tối đa +4%',kind:'d'},
+            {id:7,name:'Né đòn +10%',kind:'d'},
+            {id:5,name:'Giảm sát thương 4%',kind:'d'},
+            {id:11,name:'Phản 5% sát thương',kind:'d'}
           ];
-          function defaults(){return {excellent:[]}}
-          function save(){try{localStorage.setItem('muAutoFilterProRules',JSON.stringify(rules));localStorage.setItem('muAutoFilterProCommon',JSON.stringify(common));localStorage.setItem('muAutoFilterProActive',active?'1':'0')}catch(e){}}
-          function load(){try{
-            var x=JSON.parse(localStorage.getItem('muAutoFilterProRules')||'null');
-            if(Array.isArray(x)&&x.length){
-              if(x[0]&&Array.isArray(x[0].excellent)){
-                rules=x.map(function(r){return {excellent:Array.isArray(r.excellent)?r.excellent.map(Number):[]}})
-                var legacy=x[0];common.type=legacy.type||common.type;common.class=legacy.class||'all';common.option=Number(legacy.option)||0;common.upgrade=Number(legacy.upgrade)||0;common.luck=!!legacy.luck;common.bonus=!!legacy.bonus;common.bonusMin=Number(legacy.bonusMin)||0;common.keepEquipped=legacy.keepEquipped!==false;common.onlyExcellent=!!legacy.onlyExcellent;
-              } else rules=x;
-            } else rules=[defaults()];
-            var c=JSON.parse(localStorage.getItem('muAutoFilterProCommon')||'null');if(c&&typeof c==='object')common=Object.assign(common,c);
-            active=localStorage.getItem('muAutoFilterProActive')==='1';
-          }catch(e){rules=[defaults()]}}
-          function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-          function renderRules(){
-            var host=$('#af-rules');
-            host.innerHTML=rules.map(function(rule,i){
-              var chips=(rule.excellent||[]).map(function(code){
-                var ex=exCatalog.find(function(x){return x.id===Number(code)});
-                return ex?'<span class="af-chip">'+esc(ex.name)+' <button type="button" class="af-remove-ex" data-rule="'+i+'" data-ex="'+ex.id+'">×</button></span>':'';
+          var common = {type:'w',class:'all',option:0,upgrade:0,luck:false,bonus:false,bonusMin:0};
+          var rules = [{excellent:[]}];
+          var active = false, busy = false, lastRows = [], status, list;
+          var $ = function(q){return slot.querySelector(q);};
+          function esc(v) { return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+          function state() {
+            return window.S && Array.isArray(window.S.inv) && window.D && window.D.item
+              ? {s:window.S,items:window.S.inv,db:window.D.item} : null;
+          }
+          function groupType(g) {
+            g=Number(g);
+            if (g>=0 && g<=5) return 'w';
+            return ({6:'s',7:'h',8:'a',9:'p',10:'g',11:'b'})[g] || null;
+          }
+          function equippedIds(s) {
+            var out={};
+            Object.keys(s.eq||{}).forEach(function(k) {
+              var x=s.eq[k];
+              if (x && x.u!=null) out[String(x.u)]=true;
+            });
+            return out;
+          }
+          function baseOf(it,db) { return db[String(it.g)+'_'+String(it.n)] || null; }
+          function itemName(it,db) { var b=baseOf(it,db); return b && b.name || 'Không rõ item'; }
+          function classAllowed(base,selected) {
+            if (!selected || selected==='all') return true;
+            var names={dw:'Dark Wizard',dk:'Dark Knight',el:'Fairy Elf',mg:'Magic Gladiator',dl:'Dark Lord'};
+            var keys=Object.keys(base||{}).filter(function(k){return /class|cls|job|use/i.test(k);});
+            if (!keys.length) return false;
+            var vals=[];
+            keys.forEach(function(k){var v=base[k]; if(Array.isArray(v)) vals=vals.concat(v); else if(v!=null) vals.push(v);});
+            return vals.some(function(v) {
+              if (typeof v==='number') return ({0:'dw',1:'dk',2:'el',3:'mg',4:'dl'})[v]===selected;
+              var t=String(v).toLowerCase();
+              return t===selected || t.indexOf(names[selected].toLowerCase())>=0;
+            });
+          }
+          function commonMatch(it,eq,db) {
+            var base=baseOf(it,db), kind=groupType(it.g);
+            if (!base || !kind || kind!==common.type) return false;
+            if (!classAllowed(base,common.class)) return false;
+            if (Number(it.o||0)<Number(common.option||0)) return false;
+            if (Number(it.l||0)<Number(common.upgrade||0)) return false;
+            if (common.luck && !(it.lk===true || Number(it.lk)>0)) return false;
+            if (common.bonus && Number(it.bonus||it.lvBonus||0)<Number(common.bonusMin||0)) return false;
+            if (eq[String(it.u)]) return false;
+            return true;
+          }
+          function ruleMatch(it,rule) {
+            var selected=Array.isArray(rule.excellent)?rule.excellent:[];
+            if (!selected.length || !Array.isArray(it.ex)) return false;
+            var codes=it.ex.map(Number);
+            return selected.every(function(c){return codes.indexOf(Number(c))>=0;});
+          }
+          function matchesKeep(it) { return rules.some(function(r){return ruleMatch(it,r);}); }
+          function scan() {
+            var st=state();
+            if (!st) return null;
+            var eq=equippedIds(st.s);
+            return st.items.map(function(it) {
+              var base=baseOf(it,st.db), equipped=!!eq[String(it.u)];
+              var inScope=!!base && !!groupType(it.g) && groupType(it.g)===common.type &&
+                classAllowed(base,common.class) &&
+                Number(it.o||0)>=Number(common.option||0) &&
+                Number(it.l||0)>=Number(common.upgrade||0) &&
+                (!common.luck || it.lk===true || Number(it.lk)>0) &&
+                (!common.bonus || Number(it.bonus||it.lvBonus||0)>=Number(common.bonusMin||0));
+              var keep = equipped || !base || !inScope || rules.length===0 || matchesKeep(it);
+              return {raw:it,id:String(it.u),name:itemName(it,st.db),known:!!base,equipped:equipped,inScope:inScope,keep:keep,candidate:!keep};
+            });
+          }
+          function save() {
+            try {
+              localStorage.setItem('muAutoFilterCleanRules',JSON.stringify(rules));
+              localStorage.setItem('muAutoFilterCleanCommon',JSON.stringify(common));
+              localStorage.setItem('muAutoFilterCleanActive',active?'1':'0');
+              localStorage.setItem('muAutoFilterProRules',JSON.stringify(rules));
+              localStorage.setItem('muAutoFilterProCommon',JSON.stringify(common));
+              localStorage.setItem('muAutoFilterProActive',active?'1':'0');
+            } catch(e) {}
+          }
+          function load() {
+            try {
+              var r=JSON.parse(localStorage.getItem('muAutoFilterCleanRules')||'null');
+              if (!Array.isArray(r)) r=JSON.parse(localStorage.getItem('muAutoFilterProRules')||'null');
+              if (Array.isArray(r) && r.length) rules=r.map(function(x){return {excellent:Array.isArray(x.excellent)?x.excellent.map(Number).filter(function(n){return exCatalog.some(function(e){return e.id===n;});}).slice(0,6):[]};});
+              var c=JSON.parse(localStorage.getItem('muAutoFilterCleanCommon')||'null');
+              if (!c) c=JSON.parse(localStorage.getItem('muAutoFilterProCommon')||'null');
+              if (c && typeof c==='object') common=Object.assign(common,c);
+              active=localStorage.getItem('muAutoFilterCleanActive')==='1' || localStorage.getItem('muAutoFilterProActive')==='1';
+            } catch(e) { rules=[{excellent:[]}]; active=false; }
+          }
+          function renderRules() {
+            $('#af-rules').innerHTML=rules.map(function(rule,i) {
+              var tags=(rule.excellent||[]).map(function(code) {
+                var x=exCatalog.find(function(e){return e.id===Number(code);});
+                return x ? '<span class="af-tag">'+esc(x.name)+'<button type="button" data-remove="'+i+'" data-code="'+x.id+'" aria-label="Xóa">×</button></span>' : '';
               }).join('');
-              var choices=exCatalog.filter(function(x){return !rule.excellent.includes(x.id)}).map(function(x){return '<option value="'+x.id+'">'+esc(x.name)+'</option>'}).join('');
-              return '<div class="af-rule-card"><div class="af-rule-head"><b>Luật '+(i+1)+'</b><button type="button" class="af-delete-rule" data-rule="'+i+'">🗑</button></div><div class="af-chip-list">'+(chips||'<span class="muted">Chưa chọn EX Option</span>')+'</div><div class="row"><select class="af-add-select" data-rule="'+i+'"><option value="">-- Chọn EX Option --</option>'+choices+'</select><button type="button" class="af-add-ex" data-rule="'+i+'">＋ Thêm EX Option</button></div></div>';
+              var options=exCatalog.filter(function(x){return !(rule.excellent||[]).includes(x.id);})
+                .map(function(x){return '<option value="'+x.id+'">'+esc(x.name)+'</option>';}).join('');
+              return '<div class="af-rule"><div class="af-rulehead"><span>Rule '+(i+1)+' · '+(rule.excellent.length)+'/6 EX</span><button class="af-btn af-danger" type="button" data-delete="'+i+'">Xóa</button></div><div class="af-tags">'+(tags||'<span class="af-muted">Chưa chọn EX Option</span>')+'</div><div class="af-row"><select data-select="'+i+'"><option value="">Chọn EX Option</option>'+options+'</select><button class="af-btn" type="button" data-add="'+i+'">＋ Thêm</button></div></div>';
             }).join('');
           }
-          function fill(){
-            $('#af-type').value=common.type;$('#af-class').value=common.class;$('#af-option').value=common.option;$('#af-upgrade').value=common.upgrade;
-            $('#af-luck').checked=!!common.luck;$('#af-bonus').checked=!!common.bonus;$('#af-bonus-min').value=common.bonusMin;
-            $('#af-equipped').checked=common.keepEquipped!==false;$('#af-onlyex').checked=!!common.onlyExcellent;
+          function fill() {
+            $('#af-type').value=common.type;
+            $('#af-class').value=common.class;
+            $('#af-option').value=String(common.option);
+            $('#af-upgrade').value=String(common.upgrade);
+            $('#af-luck').checked=!!common.luck;
+            $('#af-bonus').checked=!!common.bonus;
+            $('#af-bonus-min').value=String(common.bonusMin);
             renderRules();
+            paintToggle();
           }
-          function readForm(){
-            common.type=$('#af-type').value;common.class=$('#af-class').value;common.option=Number($('#af-option').value);common.upgrade=Number($('#af-upgrade').value);
-            common.luck=$('#af-luck').checked;common.bonus=$('#af-bonus').checked;common.bonusMin=Number($('#af-bonus-min').value);
-            common.keepEquipped=$('#af-equipped').checked;common.onlyExcellent=$('#af-onlyex').checked;save();
+          function readForm() {
+            common.type=$('#af-type').value;
+            common.class=$('#af-class').value;
+            common.option=Number($('#af-option').value);
+            common.upgrade=Number($('#af-upgrade').value);
+            common.luck=$('#af-luck').checked;
+            common.bonus=$('#af-bonus').checked;
+            common.bonusMin=Number($('#af-bonus-min').value);
+            save();
           }
-          function groupType(g){g=Number(g);if(g>=0&&g<=5)return 'w';return ({6:'s',7:'h',8:'a',9:'p',10:'g',11:'b'})[g]||null}
-          function state(){return window.S&&Array.isArray(window.S.inv)&&window.D&&window.D.item?{s:window.S,items:window.S.inv,db:window.D.item}:null}
-          function equippedIds(s){var out={};Object.keys(s.eq||{}).forEach(function(k){var x=s.eq[k];if(x&&x.u!=null)out[String(x.u)]=true});return out}
-          function itemName(it,db){var x=db[String(it.g)+'_'+String(it.n)];return x&&x.name||'Không rõ item'}
-          function classAllowed(base,selected){if(!selected||selected==='all')return true;var names={dw:'Dark Wizard',dk:'Dark Knight',el:'Fairy Elf',mg:'Magic Gladiator',dl:'Dark Lord'};var keys=Object.keys(base||{}).filter(function(k){return /class|cls|job|use/i.test(k)});if(!keys.length)return false;var vals=[];keys.forEach(function(k){var v=base[k];if(Array.isArray(v))vals=vals.concat(v);else if(v!=null)vals.push(v)});var target=names[selected].toLowerCase();return vals.some(function(v){if(typeof v==='number')return ({0:'dw',1:'dk',2:'el',3:'mg',4:'dl'})[v]===selected;var t=String(v).toLowerCase();return t===selected||t.indexOf(target)>=0})}\n          function commonMatch(it,eq,db){var key=String(it.g)+'_'+String(it.n),base=db[key];if(!base||!groupType(it.g)||groupType(it.g)!==common.type)return false;if(!classAllowed(base,common.class))return false;if(common.keepEquipped&&eq[String(it.u)])return false;if(common.onlyExcellent&&!(Array.isArray(it.ex)&&it.ex.length))return false;if(Number(it.o||0)<Number(common.option||0)||Number(it.l||0)<Number(common.upgrade||0))return false;if(common.luck&&!(it.lk===true||Number(it.lk)>0))return false;if(common.bonus&&Number(it.bonus||it.lvBonus||0)<Number(common.bonusMin||0))return false;return true}
-          function ruleMatch(it,rule){var selected=rule.excellent||[];if(!selected.length)return false;if(!Array.isArray(it.ex))return false;var codes=it.ex.map(Number);return selected.every(function(c){return codes.indexOf(Number(c))>=0})}
-          function scan(){var st=state();if(!st){status.textContent='Không đọc được dữ liệu inventory/catalog. Chưa thao tác.';return []}var eq=equippedIds(st.s);return st.items.map(function(it){var base=st.db[String(it.g)+'_'+String(it.n)],kind=groupType(it.g);return {raw:it,id:String(it.u),name:itemName(it,st.db),type:kind,known:!!base,equipped:!!eq[String(it.u)],plus:Number(it.l||0),luck:it.lk===true||Number(it.lk)>0,option:Number(it.o||0),ex:Array.isArray(it.ex)?it.ex.map(Number):null}})}
-          function preview(){readForm();var st=state();if(!st){status.textContent='Không đọc được inventory/catalog.';return}var eq=equippedIds(st.s),rows=st.items.map(function(it){var base=st.db[String(it.g)+'_'+String(it.n)],matched=commonMatch(it,eq,st.db)&&rules.some(function(r){return ruleMatch(it,r)});return {it:it,known:!!base,equipped:!!eq[String(it.u)],candidate:!!base&&!eq[String(it.u)]&&matched,name:itemName(it,st.db)}});lastRows=rows;list.innerHTML=rows.map(function(x){return '<div class="item '+(x.candidate?'candidate':'keep')+'"><b>'+(x.candidate?'LOẠI BỎ':'GIỮ')+'</b> · '+x.name+' · ID '+x.it.u+(x.equipped?' · ĐANG MẶC':'')+(!x.known?' · CHƯA NHẬN DIỆN':'')+'</div>'}).join('');reportText=JSON.stringify({mode:'AUTO_FILTER_PRO_PREVIEW',ruleLogic:'AND within rule; OR across rules; common filters apply to all rules',rules:rules,results:rows.map(function(x){return {id:x.it.u,name:x.name,decision:x.candidate?'REMOVE':'KEEP',equipped:x.equipped,known:x.known}})},null,2);status.textContent='Chạy thử: '+rows.filter(function(x){return x.candidate}).length+' ứng viên / '+rows.length+' item. Chưa bán.';return rows}
-          function wait(test,ms){return new Promise(function(resolve){var t=Date.now();(function poll(){var v=false;try{v=test()}catch(e){}if(v)return resolve(v);if(Date.now()-t>=ms)return resolve(false);setTimeout(poll,100)})()})}
-          var busy=false;
-          async function sellOne(){if(busy)return;busy=true;$('#af-sell').disabled=true;try{var rows=preview()||[],target=rows.find(function(x){return x.candidate});if(!target){status.textContent='Không có ứng viên phù hợp.';return}var st=state(),before=JSON.stringify(st.items.find(function(x){return String(x.u)===String(target.it.u)})),node=Array.from(document.querySelectorAll('.it[data-u]')).find(function(x){return x.getAttribute('data-u')===String(target.it.u)});if(!node){status.textContent='Không tìm thấy ô item. Đã dừng.';return}node.click();var sell=await wait(function(){var e=document.querySelector('button[data-k="sell"]');if(!e)return false;var r=e.getBoundingClientRect(),c=getComputedStyle(e);return r.width>0&&r.height>0&&c.display!=='none'&&c.visibility!=='hidden'?e:false},2500);if(!sell){status.textContent='Không thấy nút Bán.';return}var cur=state();var item=cur&&cur.items.find(function(x){return String(x.u)===String(target.it.u)});if(!item||JSON.stringify(item)!==before||equippedIds(cur.s)[String(target.it.u)]){status.textContent='Item thay đổi hoặc đang mặc. Hủy.';return}sell.click();var confirm=await wait(function(){var e=document.querySelector('button[data-k="sell"][data-ok="1"]');if(!e||!/bấm lần nữa để bán/i.test(e.textContent||''))return false;var r=e.getBoundingClientRect();return r.width>0&&r.height>0?e:false},2500);if(!confirm){status.textContent='Không thấy nút xác nhận bán lần hai. Không click tiếp.';return}cur=state();item=cur&&cur.items.find(function(x){return String(x.u)===String(target.it.u)});if(!item||JSON.stringify(item)!==before){status.textContent='Item đã thay đổi trước xác nhận. Hủy.';return}confirm.click();var gone=await wait(function(){var q=state();return !q||!q.items.some(function(x){return String(x.u)===String(target.it.u)})},4000);status.textContent=gone?'Đã xác minh bán thành công ID '+target.it.u+'.':'Chưa xác minh được item biến mất. Đã dừng.';if(gone)preview()}catch(e){status.textContent='Lỗi: '+String(e)}finally{busy=false;$('#af-sell').disabled=false}}
-          $('.gear').onclick=function(){panel.style.display=panel.style.display==='block'?'none':'block'};
-          ['af-type','af-class','af-option','af-upgrade','af-luck','af-bonus','af-bonus-min','af-equipped','af-onlyex'].forEach(function(id){$('#'+id).onchange=function(){readForm()}});
-          $('#af-add-rule').onclick=function(){readForm();rules.push(defaults());renderRules();save()};
-          $('#af-rules').addEventListener('click',function(e){
-            var add=e.target.closest('.af-add-ex'),remove=e.target.closest('.af-remove-ex'),del=e.target.closest('.af-delete-rule');
-            if(add){var idx=Number(add.dataset.rule),sel=$('#af-rules').querySelector('.af-add-select[data-rule="'+idx+'"]'),code=Number(sel.value);if(!sel.value)return;if(!rules[idx].excellent.includes(code))rules[idx].excellent.push(code);renderRules();save();return}
-            if(remove){var ri=Number(remove.dataset.rule),code=Number(remove.dataset.ex);rules[ri].excellent=rules[ri].excellent.filter(function(x){return Number(x)!==code});renderRules();save();return}
-            if(del){var di=Number(del.dataset.rule);if(rules.length===1)rules[0]=defaults();else rules.splice(di,1);renderRules();save()}
+          function paintToggle() {
+            $('#af-toggle').textContent='AUTO FILTER · '+(active?'ĐANG BẬT':'ĐÃ TẮT');
+            $('#af-toggle').classList.toggle('on',active);
+          }
+          function preview() {
+            readForm();
+            var rows=scan();
+            if (!rows) { status.textContent='Chưa đọc được inventory/catalog. Chưa thực hiện thao tác.'; return null; }
+            lastRows=rows;
+            var candidates=rows.filter(function(x){return x.candidate;});
+            list.innerHTML=rows.map(function(x) {
+              var label=x.candidate?'ỨNG VIÊN BÁN':'GIỮ';
+              return '<div class="af-item"><b>'+label+'</b> · '+esc(x.name)+' · ID '+esc(x.id)+(x.equipped?' · ĐANG MẶC':'')+(!x.known?' · KHÔNG NHẬN DIỆN':'')+'</div>';
+            }).join('');
+            status.textContent='Đã quét '+rows.length+' item · '+candidates.length+' ứng viên bán. Item đang mặc/không nhận diện luôn được giữ.';
+            return rows;
+          }
+          function waitFor(test,timeout) {
+            return new Promise(function(resolve) {
+              var started=Date.now();
+              (function poll() {
+                var value=false;
+                try { value=test(); } catch(e) {}
+                if (value) return resolve(value);
+                if (Date.now()-started>=timeout) return resolve(false);
+                setTimeout(poll,100);
+              })();
+            });
+          }
+          function sameItem(id,signature) {
+            var st=state();
+            if (!st) return false;
+            var it=st.items.find(function(x){return String(x.u)===String(id);});
+            if (!it) return false;
+            return JSON.stringify(it)===signature && !equippedIds(st.s)[String(id)];
+          }
+          async function sellOne() {
+            if (busy) return false;
+            busy=true;
+            try {
+              var rows=preview();
+              var target=rows && rows.find(function(x){return x.candidate;});
+              if (!target) return false;
+              var st=state();
+              var live=st && st.items.find(function(x){return String(x.u)===target.id;});
+              if (!live || equippedIds(st.s)[target.id]) return false;
+              var signature=JSON.stringify(live);
+              var node=Array.prototype.slice.call(document.querySelectorAll('.it[data-u]')).find(function(x){return x.getAttribute('data-u')===target.id;});
+              if (!node) { status.textContent='Không tìm thấy ô item tương ứng. Đã dừng.'; return false; }
+              node.click();
+              var sell=await waitFor(function() {
+                var e=document.querySelector('button[data-k="sell"]');
+                if (!e) return false;
+                var r=e.getBoundingClientRect(),s=getComputedStyle(e);
+                return r.width>0 && r.height>0 && s.display!=='none' && s.visibility!=='hidden' ? e : false;
+              },2500);
+              if (!sell || !sameItem(target.id,signature)) { status.textContent='Không xác minh được item/nút bán. Đã hủy.'; return false; }
+              sell.click();
+              var confirm=await waitFor(function() {
+                var e=document.querySelector('button[data-k="sell"][data-ok="1"]');
+                if (!e || !/bấm lần nữa để bán/i.test(e.textContent||'')) return false;
+                var r=e.getBoundingClientRect();
+                return r.width>0 && r.height>0 ? e : false;
+              },2500);
+              if (!confirm || !sameItem(target.id,signature)) { status.textContent='Không xác minh được bước xác nhận thứ hai. Đã hủy.'; return false; }
+              confirm.click();
+              var gone=await waitFor(function() {
+                var q=state();
+                return !q || !q.items.some(function(x){return String(x.u)===target.id;});
+              },4000);
+              status.textContent=gone?'Đã bán và xác minh item ID '+target.id+'.':'Chưa xác minh item biến mất. Dừng thao tác để tránh bán nhầm.';
+              if (gone) preview();
+              return gone;
+            } catch(e) {
+              status.textContent='Auto Filter dừng do lỗi: '+String(e);
+              return false;
+            } finally { busy=false; }
+          }
+          function tick() {
+            if (!active || busy) return;
+            var rows=scan();
+            if (!rows) return;
+            if (rows.some(function(x){return x.candidate;})) sellOne();
+          }
+
+          slot.innerHTML='<div class="af-section"><div class="af-title">AUTO FILTER</div><div class="af-grid"><div class="af-field"><div class="af-label">Loại trang bị</div><select id="af-type"><option value="w">Weapon · Vũ khí</option><option value="s">Shield · Khiên</option><option value="h">Headgear · Helm + Circlet</option><option value="a">Armor · Giáp</option><option value="p">Pants · Quần</option><option value="g">Gloves · Găng</option><option value="b">Boots · Giày</option></select></div><div class="af-field"><div class="af-label">Class sử dụng</div><select id="af-class"><option value="all">Tất cả class</option><option value="dw">Dark Wizard</option><option value="dk">Dark Knight</option><option value="el">Fairy Elf</option><option value="mg">Magic Gladiator</option><option value="dl">Dark Lord</option></select></div><div class="af-field"><div class="af-label">Option tối thiểu</div><select id="af-option"><option value="0">Không xét</option><option value="1">+1 trở lên</option><option value="2">+2 trở lên</option><option value="3">+3 trở lên</option><option value="4">+4 trở lên</option></select></div><div class="af-field"><div class="af-label">Upgrade tối thiểu</div><select id="af-upgrade"><option value="0">Không xét</option><option value="3">+3 trở lên</option><option value="4">+4 trở lên</option><option value="5">+5 trở lên</option><option value="6">+6 trở lên</option><option value="7">+7 trở lên</option><option value="9">+9 trở lên</option><option value="10">+10 trở lên</option></select></div></div><label class="af-check"><input id="af-luck" type="checkbox">Luck</label><label class="af-check"><input id="af-bonus" type="checkbox">Bonus cấp</label><select id="af-bonus-min" style="width:95px"><option value="0">Bonus bất kỳ</option><option value="1">+1 trở lên</option><option value="2">+2 trở lên</option><option value="3">+3 trở lên</option></select><div class="af-rule"><div class="af-rulehead"><span>Danh sách Rule</span><button class="af-btn" id="af-add-rule" type="button">＋ Thêm Rule</button></div><div class="af-muted">Trong cùng Rule: AND (tất cả EX phải có). Giữa các Rule: OR (đạt một Rule là giữ). Tối đa 6 EX mỗi Rule.</div><div id="af-rules"></div></div><div class="af-row"><button class="af-btn" id="af-preview" type="button">CHẠY THỬ</button><button class="af-btn" id="af-toggle" type="button">AUTO FILTER · ĐÃ TẮT</button></div><div class="af-status" id="af-status">Chưa quét inventory.</div><div class="af-list" id="af-list"></div></div>';
+          status=$('#af-status'); list=$('#af-list');
+          load(); fill();
+          ['af-type','af-class','af-option','af-upgrade','af-luck','af-bonus','af-bonus-min'].forEach(function(id) {
+            $('#'+id).onchange=readForm;
           });
-          $('#af-preview').onclick=preview;$('#af-sell').onclick=sellOne;
-          $('#af-copyreport').onclick=function(){var t=reportText||JSON.stringify(rules,null,2);if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){status.textContent='Đã sao chép báo cáo.'}).catch(function(){status.textContent='Không sao chép được; hãy chạy thử trước.'})};
-          $('#af-toggle').onclick=function(){active=!active;this.textContent='AUTO FILTER · '+(active?'ĐANG BẬT':'ĐANG TẮT');this.classList.toggle('red',active);save();status.textContent=active?'Đã bật cấu hình Auto Filter. Chạy thử và dùng BÁN THỬ 1 ỨNG VIÊN để xác nhận từng món.':'Đã tắt Auto Filter.'};
-          load();fill();$('#af-toggle').textContent='AUTO FILTER · '+(active?'ĐANG BẬT':'ĐANG TẮT');status.textContent='Auto Filter đã sẵn sàng. Cấu hình được lưu trên thiết bị.';
+          $('#af-add-rule').onclick=function() {
+            readForm();
+            rules.push({excellent:[]});
+            renderRules(); save();
+          };
+          $('#af-rules').addEventListener('click',function(ev) {
+            var add=ev.target.closest('[data-add]'), remove=ev.target.closest('[data-remove]'), del=ev.target.closest('[data-delete]');
+            if (add) {
+              var i=Number(add.getAttribute('data-add')), select=$('#af-rules').querySelector('[data-select="'+i+'"]');
+              if (!select || !select.value) return;
+              if (rules[i].excellent.length>=6) { status.textContent='Mỗi Rule chỉ được chọn tối đa 6 EX.'; return; }
+              var code=Number(select.value);
+              if (!rules[i].excellent.includes(code)) rules[i].excellent.push(code);
+              renderRules(); save(); return;
+            }
+            if (remove) {
+              var ri=Number(remove.getAttribute('data-remove')), code=Number(remove.getAttribute('data-code'));
+              rules[ri].excellent=rules[ri].excellent.filter(function(x){return Number(x)!==code;});
+              renderRules(); save(); return;
+            }
+            if (del) {
+              var di=Number(del.getAttribute('data-delete'));
+              if (rules.length===1) rules[0]={excellent:[]}; else rules.splice(di,1);
+              renderRules(); save();
+            }
+          });
+          $('#af-preview').onclick=preview;
+          $('#af-toggle').onclick=function() {
+            readForm();
+            if (!active && (!rules.length || rules.every(function(r){return !r.excellent.length;}))) {
+              status.textContent='Hãy tạo ít nhất một Rule có EX trước khi bật để tránh lọc nhầm.';
+              return;
+            }
+            active=!active; save(); paintToggle();
+            status.textContent=active?'Đã bật Auto Filter. Hệ thống sẽ quét và bán từng item không đạt Rule trong phạm vi đã chọn.':'Đã tắt Auto Filter.';
+            if (active) tick();
+          };
+          window.setInterval(tick,1800);
         })();
         """.trimIndent()
         webView.evaluateJavascript(js, null)
