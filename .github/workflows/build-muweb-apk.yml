@@ -2,7 +2,7 @@ name: Build MU Web APK
 
 on:
   push:
-    branches: [main]
+    branches: [mu-web]
     paths:
       - 'muweb/**'
       - '.github/workflows/build-muweb-apk.yml'
