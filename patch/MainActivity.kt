@@ -180,14 +180,14 @@ class MainActivity : Activity() {
           function muDiagNode(el) {
             if (!el || el.nodeType !== 1) return null;
             var r=el.getBoundingClientRect(), cs=getComputedStyle(el);
-            var out={tag:el.tagName,id:el.id||'',className:typeof el.className==='string'?el.className:'',text:(el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim().slice(0,180),html:(el.outerHTML||'').slice(0,1800),rect:{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)},display:cs.display,visibility:cs.visibility,cursor:cs.cursor,role:el.getAttribute('role'),onclickAttr:el.getAttribute('onclick')};
+            var out={tag:el.tagName,id:el.id||'',className:typeof el.className==='string'?el.className:'',text:(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim().slice(0,180),html:(el.outerHTML||'').slice(0,1800),rect:{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)},display:cs.display,visibility:cs.visibility,cursor:cs.cursor,role:el.getAttribute('role'),onclickAttr:el.getAttribute('onclick')};
             ['onclick','ontouchstart','onpointerdown'].forEach(function(k){try{out[k+'Type']=typeof el[k];}catch(e){}});
             try { if (window.jQuery && window.jQuery._data) out.jqueryEvents=window.jQuery._data(el,'events')||null; } catch(e) {}
             return out;
           }
           function muDiagSnapshot() {
             var all=Array.prototype.slice.call(document.querySelectorAll('body *'));
-            var candidates=all.filter(function(el){return /bãi\\s*luyện/i.test((el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim()) && (el.innerText||el.textContent||'').trim().length<100;}).slice(0,12);
+            var candidates=all.filter(function(el){return /bãi\\s*luyện/i.test((el.innerText||el.textContent||'').replace(/\s+/g,' ').trim()) && (el.innerText||el.textContent||'').trim().length<100;}).slice(0,12);
             var globals=Object.keys(window).filter(function(k){return /map|train|move|bai|luyen|zone|teleport/i.test(k);}).slice(0,200);
             var mapWin=document.getElementById('wMap'), mapBtn=document.getElementById('bMap');
             return {time:new Date().toISOString(),url:location.href,title:document.title,readyState:document.readyState,viewport:{w:innerWidth,h:innerHeight,dpr:devicePixelRatio},trainingCandidates:candidates.map(function(el){var chain=[],n=el;for(var i=0;n&&i<5;i++,n=n.parentElement)chain.push(muDiagNode(n));return chain;}),mapWindow:muDiagNode(mapWin),mapButton:muDiagNode(mapBtn),mapRows:mapWin?Array.prototype.slice.call(mapWin.querySelectorAll('.zr[data-z]')).slice(0,100).map(function(el){return {id:el.getAttribute('data-z'),text:(el.innerText||el.textContent||'').trim(),className:el.className};}):[],globalNames:globals,scriptSources:Array.prototype.slice.call(document.scripts).map(function(s){return s.src||'[inline]';}).slice(0,80),jquery:!!window.jQuery};
@@ -201,13 +201,13 @@ class MainActivity : Activity() {
           function muDiagPointer(ev) {
             if(!muDiag.active) return;
             var path=ev.composedPath?ev.composedPath():[ev.target];
-            var item=path.find(function(x){return x&&x.nodeType===1&&/bãi\\s*luyện/i.test((x.innerText||x.textContent||'').replace(/\\s+/g,' ').trim()) && (x.innerText||x.textContent||'').trim().length<100;});
+            var item=path.find(function(x){return x&&x.nodeType===1&&/bãi\\s*luyện/i.test((x.innerText||x.textContent||'').replace(/\s+/g,' ').trim()) && (x.innerText||x.textContent||'').trim().length<100;});
             if(item) muDiag.events.push({type:'pointerdown',time:Date.now(),target:muDiagNode(ev.target),trainingNode:muDiagNode(item),path:path.slice(0,8).map(muDiagNode)});
           }
           function muDiagClick(ev) {
             if(!muDiag.active) return;
             var path=ev.composedPath?ev.composedPath():[ev.target];
-            var item=path.find(function(x){return x&&x.nodeType===1&&/bãi\\s*luyện/i.test((x.innerText||x.textContent||'').replace(/\\s+/g,' ').trim()) && (x.innerText||x.textContent||'').trim().length<100;});
+            var item=path.find(function(x){return x&&x.nodeType===1&&/bãi\\s*luyện/i.test((x.innerText||x.textContent||'').replace(/\s+/g,' ').trim()) && (x.innerText||x.textContent||'').trim().length<100;});
             if(item) {
               muDiag.events.push({type:'click',time:Date.now(),defaultPrevented:ev.defaultPrevented,target:muDiagNode(ev.target),trainingNode:muDiagNode(item),path:path.slice(0,10).map(muDiagNode)});
               setTimeout(function(){muDiag.after=muDiagSnapshot();status.textContent='Đã ghi nhận click Bãi luyện. Nhấn COPY DIAGNOSTIC JS để gửi dữ liệu.';},700);
