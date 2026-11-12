@@ -38,7 +38,7 @@ jobs:
 
           echo "PROJECT_DIR=$(dirname "$PROJECT_FILE")" >> "$GITHUB_ENV"
 
-      - name: Apply MU IDLE diagnostic and graphics panel
+      - name: Apply MU IDLE custom panels
         run: |
           MAIN_ACTIVITY=$(find "$PROJECT_DIR/app/src/main/java" -name MainActivity.kt -print -quit)
           if [ -z "$MAIN_ACTIVITY" ]; then
