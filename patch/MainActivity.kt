@@ -274,6 +274,17 @@ class MainActivity : Activity() {
             if (cfg.on) { lastReset=resetValue(); failed=0; }
             safeSave(); paint(); tick();
           };
+          // Load the game's map list automatically after the game page opens.
+          // Retry briefly because the game UI/data may initialize after onPageFinished.
+          function bootstrapMapLoad() {
+            if (maps.length || readBusy) return;
+            if (readTries >= 5) return;
+            readMaps(true);
+            window.setTimeout(function() {
+              if (!maps.length && !readBusy && readTries < 5) bootstrapMapLoad();
+            },2200);
+          }
+          window.setTimeout(bootstrapMapLoad,1800);
           window.setInterval(function(){ tick(); },1000);
         })();
         """.trimIndent()
