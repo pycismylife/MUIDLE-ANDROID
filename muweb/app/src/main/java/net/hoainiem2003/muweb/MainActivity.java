@@ -3,6 +3,7 @@ package net.hoainiem2003.muweb;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -31,10 +32,17 @@ public class MainActivity extends Activity {
         if (root != null) root.setSystemUiVisibility(IMMERSIVE_FLAGS);
     }
 
+    private void startKeepAlive() {
+        Intent service = new Intent(this, KeepAliveService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(service);
+        else startService(service);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         applyImmersiveMode();
+        startKeepAlive();
 
         root = new FrameLayout(this);
         root.setFitsSystemWindows(false);
@@ -61,10 +69,6 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-
-        // Lock WebView page scaling so App Cloner cannot introduce a different
-        // initial zoom. This is a per-WebView scale setting; Android's physical
-        // display density remains controlled by the device.
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
@@ -81,9 +85,7 @@ public class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 String host = uri.getHost();
-                if ("hoainiem2003.net".equalsIgnoreCase(host) || "www.hoainiem2003.net".equalsIgnoreCase(host)) {
-                    return false;
-                }
+                if ("hoainiem2003.net".equalsIgnoreCase(host) || "www.hoainiem2003.net".equalsIgnoreCase(host)) return false;
                 if ("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme())) {
                     try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) {}
                     return true;
