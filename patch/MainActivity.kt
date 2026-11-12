@@ -64,7 +64,7 @@ class MainActivity : Activity() {
                 webView.visibility = View.VISIBLE
                 CookieManager.getInstance().flush()
                 installAutoMoveMap()
-                installInventoryInspector()
+                installAutoFilter()
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
@@ -343,7 +343,7 @@ class MainActivity : Activity() {
         webView.evaluateJavascript(js, null)
     }
 
-    private fun installInventoryInspector() {
+    private fun installAutoFilter() {
         val js = """
         (function(){
           function attachFilterLauncher(){
