@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MU Web</string>
+    <string name="notification_channel_name">MU Web background service</string>
+    <string name="notification_channel_description">Keeps the MU Web session active while running in the background.</string>
+    <string name="notification_title">MU Web is running</string>
+    <string name="notification_text">Maintaining your game session</string>
+</resources>
