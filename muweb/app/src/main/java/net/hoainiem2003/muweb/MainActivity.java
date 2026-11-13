@@ -55,6 +55,9 @@ public class MainActivity extends Activity {
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
         s.setTextZoom(100);
+        s.setUseWideViewPort(true);
+        s.setLoadWithOverviewMode(false);
+        webView.setInitialScale(90); // Medium zoom-out: show more game area without changing screen density.
 
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
